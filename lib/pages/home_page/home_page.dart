@@ -4,6 +4,7 @@ import 'package:flutter_calendar/components/TabCard_list.dart';
 import 'package:flutter_calendar/components/animation_page.dart';
 import 'package:flutter_calendar/components/dateBox_item.dart';
 import 'package:flutter_calendar/pages/add_task_page.dart';
+import 'package:flutter_calendar/pages/add_task_page/add_task_page.dart';
 import 'package:flutter_calendar/pages/content_location_page/content_location.dart';
 import 'package:flutter_calendar/pages/content_persion_page/content_persion_page.dart';
 import 'package:flutter_calendar/pages/content_resourc_page/content_resourc_page.dart';
@@ -24,9 +25,12 @@ class _HomePageState extends State<HomePage>
   String _selectedDropdownDate =
       DateFormat('dd/MM/yyyy').format(DateTime.now());
   DateTime _currentDate = DateTime.now();
-  DateTime _currentWeek = DateTime(DateTime.now().year, DateTime.now().month,
-      DateTime.now().day - (DateTime.now().weekday - 1));
-  // Ngày đầu tuần hiện tại
+  DateTime _currentWeek = DateTime(
+      DateTime.now().year,
+      DateTime.now().month,
+      DateTime.now().day -
+          DateTime.now().weekday +
+          1); // Ngày đầu tuần hiện tại
   bool _hasChangedWeek = false; // Biến trạng thái theo dõi việc chuyển tuần
 
   @override
@@ -43,45 +47,42 @@ class _HomePageState extends State<HomePage>
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (context) => Bloc_Date()..add(LoadData()),
-      child: Scaffold(
-        backgroundColor: Colors.white,
-        appBar: AppBar(
-          backgroundColor: Colors.blue,
-          leading: Builder(
-            builder: (context) => IconButton(
-              icon: Icon(Icons.format_list_bulleted,
-                  color: Colors.white, size: 24),
-              onPressed: () => Scaffold.of(context).openDrawer(),
-            ),
+    return Scaffold(
+      backgroundColor: Colors.white,
+      appBar: AppBar(
+        backgroundColor: Colors.blue,
+        leading: Builder(
+          builder: (context) => IconButton(
+            icon:
+                Icon(Icons.format_list_bulleted, color: Colors.white, size: 24),
+            onPressed: () => Scaffold.of(context).openDrawer(),
           ),
-          title: Text("Lịch công tác đơn vị",
-              style: TextStyle(color: Colors.white)),
-          centerTitle: true,
-          actions: [
-            IconButton(
-              icon: Icon(Icons.notifications, color: Colors.white, size: 24),
-              onPressed: () {
-                // Handle notification button press
-              },
-            ),
-          ],
         ),
-        drawer: CustomDrawer(),
-        body: Column(
-          children: [
-            Row(
-              children: [
-                _buildDateDropdown(),
-              ],
-            ),
-            _buildAddTaskButtons(),
-            _buildDateBoxes(),
-            _buildTabBar(),
-            Expanded(child: _buildTabBarView()),
-          ],
-        ),
+        title:
+            Text("Lịch công tác đơn vị", style: TextStyle(color: Colors.white)),
+        centerTitle: true,
+        actions: [
+          IconButton(
+            icon: Icon(Icons.notifications, color: Colors.white, size: 24),
+            onPressed: () {
+              // Handle notification button press
+            },
+          ),
+        ],
+      ),
+      drawer: CustomDrawer(),
+      body: Column(
+        children: [
+          Row(
+            children: [
+              _buildDateDropdown(),
+            ],
+          ),
+          _buildAddTaskButtons(),
+          _buildDateBoxes(),
+          _buildTabBar(),
+          Expanded(child: _buildTabBarView()),
+        ],
       ),
     );
   }
@@ -151,9 +152,6 @@ class _HomePageState extends State<HomePage>
       setState(() {
         _currentDate = picked;
         _selectedDropdownDate = DateFormat('dd/MM/yyyy').format(picked);
-
-        // Gọi sự kiện LoadData1 với tuần hoặc ngày hiện tại
-        BlocProvider.of<Bloc_Date>(context).add(LoadData());
       });
     }
   }
@@ -162,9 +160,6 @@ class _HomePageState extends State<HomePage>
     setState(() {
       _currentDate = _currentDate.add(Duration(days: increment * 7));
       _selectedDropdownDate = DateFormat('dd/MM/yyyy').format(_currentDate);
-
-      // Gọi sự kiện LoadData1 với tuần hoặc ngày hiện tại
-      BlocProvider.of<Bloc_Date>(context).add(LoadData());
     });
   }
 
@@ -172,9 +167,6 @@ class _HomePageState extends State<HomePage>
     setState(() {
       _currentDate = _currentWeek;
       _selectedDropdownDate = DateFormat('dd/MM/yyyy').format(_currentDate);
-
-      // Gọi sự kiện LoadData1 với tuần hoặc ngày hiện tại
-      BlocProvider.of<Bloc_Date>(context).add(LoadData());
     });
   }
 
@@ -221,43 +213,66 @@ class _HomePageState extends State<HomePage>
   }
 
   Widget _buildDateBoxes() {
-    return BlocBuilder<Bloc_Date, Bloc_Date_State>(
-      builder: (context, state) {
-        if (state.daysList.isEmpty) {
-          return SizedBox.shrink();
-        }
-
-        // Lấy ngày hôm nay
-        final today = DateFormat('d/M').format(DateTime.now());
-
-        return Container(
-          padding: EdgeInsets.symmetric(vertical: 8),
-          child: SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.start,
-              children: [
-                SizedBox(width: 10),
-                ...state.daysList.map((day) {
-                  final dayOfWeek = day['dayOfWeek'] ?? '';
-                  final dayMonth = day['dayMonth'] ?? '';
-
-                  return Padding(
-                    padding: const EdgeInsets.only(right: 5),
-                    child: DateBox(
-                      day: dayOfWeek,
-                      date: dayMonth,
-                      isSelected: _selectedDate == dayMonth ||
-                          dayMonth == today, // Làm nổi bật ô ngày hôm nay
-                      onTap: () => _selectDateBox(dayMonth),
-                    ),
-                  );
-                }).toList(),
-              ],
+    return Container(
+      padding: EdgeInsets.symmetric(vertical: 8),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.start,
+          children: [
+            SizedBox(width: 10),
+            DateBox(
+              day: "Thứ 2",
+              date: "19",
+              isSelected: _selectedDate == "19",
+              onTap: () => _selectDateBox("19"),
             ),
-          ),
-        );
-      },
+            SizedBox(width: 5),
+            DateBox(
+              day: "Thứ 3",
+              date: "20",
+              isSelected: _selectedDate == "20",
+              onTap: () => _selectDateBox("20"),
+            ),
+            SizedBox(width: 5),
+            DateBox(
+              day: "Thứ 4",
+              date: "21",
+              isSelected: _selectedDate == "21",
+              onTap: () => _selectDateBox("21"),
+            ),
+            SizedBox(width: 5),
+            DateBox(
+              day: "Thứ 5",
+              date: "22",
+              isSelected: _selectedDate == "22",
+              onTap: () => _selectDateBox("22"),
+            ),
+            SizedBox(width: 5),
+            DateBox(
+              day: "Thứ 6",
+              date: "23",
+              isSelected: _selectedDate == "23",
+              onTap: () => _selectDateBox("23"),
+            ),
+            SizedBox(width: 5),
+            DateBox(
+              day: "Thứ 7",
+              date: "24",
+              isSelected: _selectedDate == "24",
+              onTap: () => _selectDateBox("24"),
+            ),
+            SizedBox(width: 5),
+            DateBox(
+              day: "Chủ nhật",
+              date: "25",
+              isSelected: _selectedDate == "25",
+              onTap: () => _selectDateBox("25"),
+            ),
+            // ... Add more DateBox widgets for other days
+          ],
+        ),
+      ),
     );
   }
 
