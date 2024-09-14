@@ -220,7 +220,7 @@ class _HomePageState extends State<HomePage>
         child: Row(
           mainAxisAlignment: MainAxisAlignment.start,
           children: [
-            SizedBox(width: 10),
+            SizedBox(width: 12),
             DateBox(
               day: "Thứ 2",
               date: "19",
