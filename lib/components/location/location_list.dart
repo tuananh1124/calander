@@ -118,7 +118,7 @@ class _LocationListState extends State<LocationList> {
             style: ElevatedButton.styleFrom(
               backgroundColor: isSelected ? Colors.red : Colors.blue,
             ),
-            child: Text(isSelected ? 'Xóa' : 'Chọn'),
+            child: Text(isSelected ? 'Hủy' : 'Chọn'),
           ),
         );
       },
