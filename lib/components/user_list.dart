@@ -102,103 +102,6 @@ class _MyListState extends State<MyList> {
     super.dispose();
   }
 
-  void _initExpansionState(List<Map<String, dynamic>> departments) {
-    for (var dept in departments) {
-      _expansionState[dept['department']] = false;
-      if (dept['subgroups'] != null) {
-        _initSubgroupExpansionState(dept['subgroups']);
-      }
-    }
-  }
-
-  void _initSubgroupExpansionState(List<dynamic> subgroups) {
-    for (var subgroup in subgroups) {
-      if (subgroup is Map<String, dynamic>) {
-        _expansionState[subgroup['name']] = false;
-        if (subgroup['subgroups'] != null) {
-          _initSubgroupExpansionState(subgroup['subgroups']);
-        }
-      }
-    }
-  }
-
-  List<String> _flattenDepartmentData(
-      List<Map<String, dynamic>> departmentData) {
-    List<String> result = [];
-
-    void flatten(List<dynamic> items) {
-      for (var item in items) {
-        if (item is Map<String, dynamic>) {
-          result.add(item['name'] ?? '');
-          if (item['subgroups'] != null) {
-            flatten(item['subgroups'] as List<dynamic>);
-          }
-        } else {
-          result.add(item);
-        }
-      }
-    }
-
-    for (var department in departmentData) {
-      result.add(department['department'] ?? '');
-      if (department['subgroups'] != null) {
-        flatten(department['subgroups'] as List<dynamic>);
-      }
-    }
-
-    return result;
-  }
-
-  void _filterDepartments() {
-    final query = _searchDepartmentController.text.toLowerCase();
-    setState(() {
-      _filteredDepartmentData = departmentData.where((dept) {
-        final departmentName = dept['department']?.toLowerCase() ?? '';
-        final subgroups = dept['subgroups'] as List<dynamic>? ?? [];
-
-        // Check if department or any of its subgroups match the query
-        return departmentName.contains(query) ||
-            _searchInSubgroups(subgroups, query);
-      }).toList();
-    });
-  }
-
-  bool _searchInSubgroups(List<dynamic> subgroups, String query) {
-    for (var subgroup in subgroups) {
-      if (subgroup is Map<String, dynamic>) {
-        final name = subgroup['name']?.toLowerCase() ?? '';
-        final subSubgroups = subgroup['subgroups'] as List<dynamic>? ?? [];
-        if (name.contains(query) || _searchInSubgroups(subSubgroups, query)) {
-          return true;
-        }
-      } else if (subgroup.toString().toLowerCase().contains(query)) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  void _filterEmployees() {
-    final query = _searchEmployeeController.text.toLowerCase();
-    setState(() {
-      _filteredDataList = dataList.where((item) {
-        final name = item['name']?.toLowerCase() ?? '';
-        final position = item['position']?.toLowerCase() ?? '';
-        final group = item['group']?.toLowerCase() ?? '';
-        return (name.contains(query) || position.contains(query)) &&
-            (_selectedGroup == null ||
-                group.toLowerCase() == _selectedGroup!.toLowerCase());
-      }).toList();
-    });
-  }
-
-  void _onGroupSelected(String? value) {
-    setState(() {
-      _selectedGroup = value;
-      _filterEmployees();
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -260,7 +163,6 @@ class _MyListState extends State<MyList> {
     );
   }
 
-  // Widget for Tab Bar
   Widget _buildTabBar() {
     return Container(
       height: 50,
@@ -286,7 +188,6 @@ class _MyListState extends State<MyList> {
     );
   }
 
-  // Widget for building the search bar
   Widget _buildSearchBar(TextEditingController controller, String hintText) {
     return Padding(
       padding: const EdgeInsets.all(8.0),
@@ -303,7 +204,6 @@ class _MyListState extends State<MyList> {
     );
   }
 
-  // Widget for building the expandable department list
   Widget _buildDepartmentList() {
     return ListView.builder(
       shrinkWrap: true,
@@ -327,49 +227,6 @@ class _MyListState extends State<MyList> {
     );
   }
 
-  Widget _buildExpandableSubgroup(String name, List<dynamic> subgroups) {
-    return ExpansionTile(
-      key: Key(name), // Thêm key để Flutter có thể theo dõi trạng thái
-      initiallyExpanded: _expansionState[name] ?? false,
-      onExpansionChanged: (isExpanded) {
-        setState(() {
-          _expansionState[name] = isExpanded;
-        });
-      },
-      title: Text(name,
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w400)),
-      children: subgroups.map<Widget>((subgroup) {
-        if (subgroup is Map<String, dynamic>) {
-          return _buildExpandableSubgroup(
-              subgroup['name'], subgroup['subgroups'] ?? []);
-        } else {
-          return ListTile(
-            title: Text(subgroup),
-            onTap: () => _onGroupSelected(subgroup),
-          );
-        }
-      }).toList(),
-    );
-  }
-
-  // Widget for building subgroups
-  List<Widget> _buildSubgroupWidgets(List<dynamic> subgroups) {
-    return subgroups.map<Widget>((subgroup) {
-      if (subgroup is Map<String, dynamic>) {
-        return ExpansionTile(
-          title: Text(subgroup['name']),
-          children: _buildSubgroupWidgets(subgroup['subgroups'] ?? []),
-        );
-      } else {
-        return ListTile(
-          title: Text(subgroup),
-          onTap: () => _onGroupSelected(subgroup),
-        );
-      }
-    }).toList();
-  }
-
-  // Widget for building the list of employees
   Widget _buildEmployeeList() {
     return ListView.builder(
       itemCount: _filteredDataList.length,
@@ -403,5 +260,141 @@ class _MyListState extends State<MyList> {
         );
       },
     );
+  }
+
+  void _initExpansionState(List<Map<String, dynamic>> departments) {
+    for (var dept in departments) {
+      _expansionState[dept['department']] = false;
+      if (dept['subgroups'] != null) {
+        _initSubgroupExpansionState(dept['subgroups']);
+      }
+    }
+  }
+
+  void _initSubgroupExpansionState(List<dynamic> subgroups) {
+    for (var subgroup in subgroups) {
+      if (subgroup is Map<String, dynamic>) {
+        _expansionState[subgroup['name']] = false;
+        if (subgroup['subgroups'] != null) {
+          _initSubgroupExpansionState(subgroup['subgroups']);
+        }
+      }
+    }
+  }
+
+  List<String> _flattenDepartmentData(
+      List<Map<String, dynamic>> departmentData) {
+    List<String> result = [];
+
+    void flatten(List<dynamic> items) {
+      for (var item in items) {
+        if (item is Map<String, dynamic>) {
+          result.add(item['name'] ?? '');
+          if (item['subgroups'] != null) {
+            flatten(item['subgroups'] as List<dynamic>);
+          }
+        } else {
+          result.add(item);
+        }
+      }
+    }
+
+    for (var department in departmentData) {
+      result.add(department['department'] ?? '');
+      if (department['subgroups'] != null) {
+        flatten(department['subgroups'] as List<dynamic>);
+      }
+    }
+
+    return result;
+  }
+
+  void _filterDepartments() {
+    final query = _searchDepartmentController.text.toLowerCase();
+    setState(() {
+      _filteredDepartmentData = departmentData.where((dept) {
+        final departmentName = dept['department']?.toLowerCase() ?? '';
+        final subgroups = dept['subgroups'] as List<dynamic>? ?? [];
+        return departmentName.contains(query) ||
+            _searchInSubgroups(subgroups, query);
+      }).toList();
+    });
+  }
+
+  bool _searchInSubgroups(List<dynamic> subgroups, String query) {
+    for (var subgroup in subgroups) {
+      if (subgroup is Map<String, dynamic>) {
+        final name = subgroup['name']?.toLowerCase() ?? '';
+        final subSubgroups = subgroup['subgroups'] as List<dynamic>? ?? [];
+        if (name.contains(query) || _searchInSubgroups(subSubgroups, query)) {
+          return true;
+        }
+      } else if (subgroup.toString().toLowerCase().contains(query)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  void _filterEmployees() {
+    final query = _searchEmployeeController.text.toLowerCase();
+    setState(() {
+      _filteredDataList = dataList.where((item) {
+        final name = item['name']?.toLowerCase() ?? '';
+        final position = item['position']?.toLowerCase() ?? '';
+        final group = item['group']?.toLowerCase() ?? '';
+        return (name.contains(query) || position.contains(query)) &&
+            (_selectedGroup == null ||
+                group.toLowerCase() == _selectedGroup!.toLowerCase());
+      }).toList();
+    });
+  }
+
+  void _onGroupSelected(String? value) {
+    setState(() {
+      _selectedGroup = value;
+      _filterEmployees();
+    });
+  }
+
+  Widget _buildExpandableSubgroup(String name, List<dynamic> subgroups) {
+    return ExpansionTile(
+      key: Key(name), // Thêm key để Flutter có thể theo dõi trạng thái
+      initiallyExpanded: _expansionState[name] ?? false,
+      onExpansionChanged: (isExpanded) {
+        setState(() {
+          _expansionState[name] = isExpanded;
+        });
+      },
+      title: Text(name,
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w400)),
+      children: subgroups.map<Widget>((subgroup) {
+        if (subgroup is Map<String, dynamic>) {
+          return _buildExpandableSubgroup(
+              subgroup['name'], subgroup['subgroups'] ?? []);
+        } else {
+          return ListTile(
+            title: Text(subgroup),
+            onTap: () => _onGroupSelected(subgroup),
+          );
+        }
+      }).toList(),
+    );
+  }
+
+  List<Widget> _buildSubgroupWidgets(List<dynamic> subgroups) {
+    return subgroups.map<Widget>((subgroup) {
+      if (subgroup is Map<String, dynamic>) {
+        return ExpansionTile(
+          title: Text(subgroup['name']),
+          children: _buildSubgroupWidgets(subgroup['subgroups'] ?? []),
+        );
+      } else {
+        return ListTile(
+          title: Text(subgroup),
+          onTap: () => _onGroupSelected(subgroup),
+        );
+      }
+    }).toList();
   }
 }

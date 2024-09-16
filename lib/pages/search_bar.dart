@@ -7,6 +7,7 @@ class SearchBarWithDropdown extends StatefulWidget {
 
 class _SearchBarWithDropdownState extends State<SearchBarWithDropdown> {
   String _selectedFilter = 'Theo tuần';
+  String? _selectedUnit;
   List<Map<String, dynamic>> unitData = [
     {
       'department': 'Vụ Tổ Chức Cán Bộ',
@@ -30,110 +31,82 @@ class _SearchBarWithDropdownState extends State<SearchBarWithDropdown> {
     // ... (other items)
   ];
 
-  List<String> _searchResults = [];
-  bool _isExpanded = false;
-  final TextEditingController _searchController = TextEditingController();
+  List<String> getDropdownItems(List<Map<String, dynamic>> data) {
+    List<String> items = [];
 
-  void _updateSearchResults(String query) {
-    List<String> results = [];
-
-    if (query.isNotEmpty) {
-      for (var department in unitData) {
-        if (department.containsKey('subgroups')) {
-          var subgroups = department['subgroups'] as List<dynamic>;
+    for (var unit in data) {
+      items.add(unit['department']);
+      if (unit.containsKey('subgroups')) {
+        var subgroups = unit['subgroups'];
+        if (subgroups is List) {
           for (var subgroup in subgroups) {
-            if (subgroup is Map<String, dynamic>) {
-              var name = subgroup['name'] as String;
-              if (name.toLowerCase().contains(query.toLowerCase())) {
-                results.add(name);
-              }
-              var subgroupItems = subgroup['subgroups'] as List<dynamic>;
-              for (var item in subgroupItems) {
-                if (item.toLowerCase().contains(query.toLowerCase())) {
-                  results.add(item);
+            if (subgroup is String) {
+              items.add(subgroup); // Hiển thị subgroups cấp con
+            } else if (subgroup is Map<String, dynamic> &&
+                subgroup.containsKey('name')) {
+              items.add(subgroup['name']); // Hiển thị subgroup chính
+              if (subgroup.containsKey('subgroups')) {
+                var nestedSubgroups = subgroup['subgroups'];
+                if (nestedSubgroups is List) {
+                  for (var nestedSubgroup in nestedSubgroups) {
+                    items.add(
+                        nestedSubgroup); // Hiển thị subgroups con của subgroup
+                  }
                 }
               }
-            } else if (subgroup.toLowerCase().contains(query.toLowerCase())) {
-              results.add(subgroup);
             }
           }
-        }
-
-        if (department['department']!
-            .toLowerCase()
-            .contains(query.toLowerCase())) {
-          results.add(department['department']!);
         }
       }
     }
 
-    setState(() {
-      _searchResults = results;
-      _isExpanded = results.isNotEmpty;
-    });
+    return items;
   }
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      child: GestureDetector(
-        onTap: () {
-          FocusScope.of(context).unfocus();
-        },
+    List<String> unitItems = getDropdownItems(unitData);
+
+    return GestureDetector(
+      onTap: () {
+        FocusScope.of(context).unfocus();
+      },
+      child: SingleChildScrollView(
         child: Column(
           children: [
             Padding(
               padding: const EdgeInsets.all(8.0),
               child: Row(
                 children: [
-                  // Flexible(
-                  //   flex: 2,
-                  //   child: TextField(
-                  //     controller: _searchController,
-                  //     onChanged: _updateSearchResults,
-                  //     decoration: InputDecoration(
-                  //       hintText: 'Tìm kiếm...',
-                  //       prefixIcon: Icon(Icons.search),
-                  //       suffixIcon: IconButton(
-                  //         icon: Icon(_isExpanded
-                  //             ? Icons.expand_less
-                  //             : Icons.expand_more),
-                  //         onPressed: () {
-                  //           setState(() {
-                  //             _isExpanded = !_isExpanded;
-                  //           });
-                  //         },
-                  //       ),
-                  //       border: OutlineInputBorder(
-                  //         borderRadius: BorderRadius.circular(10),
-                  //       ),
-                  //     ),
-                  //   ),
-                  // ),
                   Flexible(
                     flex: 2,
                     child: DropdownButtonFormField<String>(
-                      value: _selectedFilter,
+                      value: _selectedUnit,
                       decoration: InputDecoration(
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
                         ),
                       ),
-                      items: <String>['Theo tuần', 'Theo tháng']
-                          .map((String value) {
+                      icon: _selectedUnit != null
+                          ? SizedBox.shrink()
+                          : Icon(Icons.arrow_drop_down),
+                      items: unitItems.map((String value) {
                         return DropdownMenuItem<String>(
                           value: value,
-                          child: Text(value),
+                          child: Text(
+                            value,
+                            overflow: TextOverflow.ellipsis,
+                          ),
                         );
                       }).toList(),
                       onChanged: (String? newValue) {
                         setState(() {
-                          _selectedFilter = newValue!;
+                          _selectedUnit = newValue;
                         });
                       },
                     ),
                   ),
-                  SizedBox(width: 3),
+                  SizedBox(width: 2),
                   Flexible(
                     flex: 1,
                     child: DropdownButtonFormField<String>(
@@ -143,11 +116,17 @@ class _SearchBarWithDropdownState extends State<SearchBarWithDropdown> {
                           borderRadius: BorderRadius.circular(10),
                         ),
                       ),
+                      icon: _selectedFilter.isNotEmpty
+                          ? SizedBox.shrink()
+                          : Icon(Icons.arrow_drop_down),
                       items: <String>['Theo tuần', 'Theo tháng']
                           .map((String value) {
                         return DropdownMenuItem<String>(
                           value: value,
-                          child: Text(value),
+                          child: Text(
+                            value,
+                            overflow: TextOverflow.ellipsis,
+                          ),
                         );
                       }).toList(),
                       onChanged: (String? newValue) {
@@ -160,38 +139,6 @@ class _SearchBarWithDropdownState extends State<SearchBarWithDropdown> {
                 ],
               ),
             ),
-            if (_isExpanded)
-              Expanded(
-                child: ListView.builder(
-                  itemCount: _searchResults.isEmpty
-                      ? unitData.length
-                      : _searchResults.length,
-                  itemBuilder: (context, index) {
-                    if (_searchResults.isEmpty) {
-                      return ListTile(
-                        title: Text(unitData[index]['department']),
-                        onTap: () {
-                          setState(() {
-                            _searchController.text =
-                                unitData[index]['department'];
-                            _isExpanded = false;
-                          });
-                        },
-                      );
-                    } else {
-                      return ListTile(
-                        title: Text(_searchResults[index]),
-                        onTap: () {
-                          setState(() {
-                            _searchController.text = _searchResults[index];
-                            _isExpanded = false;
-                          });
-                        },
-                      );
-                    }
-                  },
-                ),
-              ),
           ],
         ),
       ),
