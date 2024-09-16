@@ -6,153 +6,194 @@ class SearchBarWithDropdown extends StatefulWidget {
 }
 
 class _SearchBarWithDropdownState extends State<SearchBarWithDropdown> {
-  final TextEditingController _controller = TextEditingController();
-  bool _showSuggestions = false;
   String _selectedFilter = 'Theo tuần';
-
-  final List<Map<String, dynamic>> unitData = [
+  List<Map<String, dynamic>> unitData = [
     {
       'department': 'Vụ Tổ Chức Cán Bộ',
       'subgroups': [
         {
           'name': 'Phòng Công tác đảng và đoàn thể',
-          'subgroups': ['Nhóm 1', 'Nhóm 2'],
+          'subgroups': [
+            'Nhóm 1',
+            'Nhóm 2',
+          ]
         },
         'Phòng Thi đua - Khen thưởng',
-        'Phòng Tổ chức - Cán bộ',
-      ],
+        'Phòng Tổ chức - Cán bộ'
+      ]
     },
     {
       'department': 'Phòng Tổng hợp',
-      'subgroups': ['Nhóm A', 'Nhóm B'],
+      'subgroups': ['Nhóm A', 'Nhóm B']
     },
-    {
-      'department': 'Phòng Cá',
-    },
-    // ... (các mục khác)
+    {'department': 'Phòng Cá'},
+    // ... (other items)
   ];
 
-  List<Map<String, dynamic>> _filteredData = [];
+  List<String> _searchResults = [];
+  bool _isExpanded = false;
+  final TextEditingController _searchController = TextEditingController();
 
-  @override
-  void initState() {
-    super.initState();
-    _filteredData = unitData;
-  }
+  void _updateSearchResults(String query) {
+    List<String> results = [];
 
-  void _filterSuggestions(String query) {
-    setState(() {
-      _filteredData = unitData.where((department) {
-        final departmentName = department['department']?.toLowerCase() ?? '';
-        final queryLower = query.toLowerCase();
-
-        // Kiểm tra nếu tên đơn vị chứa truy vấn
-        bool matchesDepartment = departmentName.contains(queryLower);
-
-        // Kiểm tra nếu nhóm phụ có chứa truy vấn
-        final subgroups = department['subgroups'] as List<dynamic>?;
-
-        bool matchesSubgroups = subgroups?.any((subgroup) {
-              if (subgroup is String) {
-                return subgroup.toLowerCase().contains(queryLower);
-              } else if (subgroup is Map<String, dynamic>) {
-                final subgroupName = subgroup['name']?.toLowerCase() ?? '';
-                bool matchesSubgroupName = subgroupName.contains(queryLower);
-
-                final subgroupList = subgroup['subgroups'] as List<dynamic>?;
-
-                bool matchesSubgroupList = subgroupList?.any((subItem) {
-                      if (subItem is String) {
-                        return subItem.toLowerCase().contains(queryLower);
-                      }
-                      return false;
-                    }) ??
-                    false;
-
-                return matchesSubgroupName || matchesSubgroupList;
+    if (query.isNotEmpty) {
+      for (var department in unitData) {
+        if (department.containsKey('subgroups')) {
+          var subgroups = department['subgroups'] as List<dynamic>;
+          for (var subgroup in subgroups) {
+            if (subgroup is Map<String, dynamic>) {
+              var name = subgroup['name'] as String;
+              if (name.toLowerCase().contains(query.toLowerCase())) {
+                results.add(name);
               }
-              return false;
-            }) ??
-            false;
+              var subgroupItems = subgroup['subgroups'] as List<dynamic>;
+              for (var item in subgroupItems) {
+                if (item.toLowerCase().contains(query.toLowerCase())) {
+                  results.add(item);
+                }
+              }
+            } else if (subgroup.toLowerCase().contains(query.toLowerCase())) {
+              results.add(subgroup);
+            }
+          }
+        }
 
-        return matchesDepartment || matchesSubgroups;
-      }).toList();
+        if (department['department']!
+            .toLowerCase()
+            .contains(query.toLowerCase())) {
+          results.add(department['department']!);
+        }
+      }
+    }
+
+    setState(() {
+      _searchResults = results;
+      _isExpanded = results.isNotEmpty;
     });
-  }
-
-  String _shortenText(String text) {
-    return text.length > 30 ? text.substring(0, 27) + '...' : text;
   }
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(8.0),
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          return Row(
-            children: [
-              Flexible(
-                flex: 2,
-                child: TextField(
-                  controller: _controller,
-                  decoration: InputDecoration(
-                    hintText: 'Đơn vị hiện tại',
-                    prefixIcon: Icon(Icons.search),
-                    suffixIcon: IconButton(
-                      icon: Icon(
-                        _showSuggestions
-                            ? Icons.arrow_drop_up
-                            : Icons.arrow_drop_down,
+    return Container(
+      child: GestureDetector(
+        onTap: () {
+          FocusScope.of(context).unfocus();
+        },
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Row(
+                children: [
+                  // Flexible(
+                  //   flex: 2,
+                  //   child: TextField(
+                  //     controller: _searchController,
+                  //     onChanged: _updateSearchResults,
+                  //     decoration: InputDecoration(
+                  //       hintText: 'Tìm kiếm...',
+                  //       prefixIcon: Icon(Icons.search),
+                  //       suffixIcon: IconButton(
+                  //         icon: Icon(_isExpanded
+                  //             ? Icons.expand_less
+                  //             : Icons.expand_more),
+                  //         onPressed: () {
+                  //           setState(() {
+                  //             _isExpanded = !_isExpanded;
+                  //           });
+                  //         },
+                  //       ),
+                  //       border: OutlineInputBorder(
+                  //         borderRadius: BorderRadius.circular(10),
+                  //       ),
+                  //     ),
+                  //   ),
+                  // ),
+                  Flexible(
+                    flex: 2,
+                    child: DropdownButtonFormField<String>(
+                      value: _selectedFilter,
+                      decoration: InputDecoration(
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
                       ),
-                      onPressed: () {
+                      items: <String>['Theo tuần', 'Theo tháng']
+                          .map((String value) {
+                        return DropdownMenuItem<String>(
+                          value: value,
+                          child: Text(value),
+                        );
+                      }).toList(),
+                      onChanged: (String? newValue) {
                         setState(() {
-                          _showSuggestions = !_showSuggestions;
+                          _selectedFilter = newValue!;
                         });
                       },
                     ),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
+                  ),
+                  SizedBox(width: 3),
+                  Flexible(
+                    flex: 1,
+                    child: DropdownButtonFormField<String>(
+                      value: _selectedFilter,
+                      decoration: InputDecoration(
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                      items: <String>['Theo tuần', 'Theo tháng']
+                          .map((String value) {
+                        return DropdownMenuItem<String>(
+                          value: value,
+                          child: Text(value),
+                        );
+                      }).toList(),
+                      onChanged: (String? newValue) {
+                        setState(() {
+                          _selectedFilter = newValue!;
+                        });
+                      },
                     ),
                   ),
-                  onChanged: (value) {
-                    _filterSuggestions(value);
-                  },
-                  onTap: () {
-                    setState(() {
-                      _showSuggestions = true;
-                    });
+                ],
+              ),
+            ),
+            if (_isExpanded)
+              Expanded(
+                child: ListView.builder(
+                  itemCount: _searchResults.isEmpty
+                      ? unitData.length
+                      : _searchResults.length,
+                  itemBuilder: (context, index) {
+                    if (_searchResults.isEmpty) {
+                      return ListTile(
+                        title: Text(unitData[index]['department']),
+                        onTap: () {
+                          setState(() {
+                            _searchController.text =
+                                unitData[index]['department'];
+                            _isExpanded = false;
+                          });
+                        },
+                      );
+                    } else {
+                      return ListTile(
+                        title: Text(_searchResults[index]),
+                        onTap: () {
+                          setState(() {
+                            _searchController.text = _searchResults[index];
+                            _isExpanded = false;
+                          });
+                        },
+                      );
+                    }
                   },
                 ),
               ),
-              SizedBox(width: 8),
-              Flexible(
-                flex: 1,
-                child: DropdownButtonFormField<String>(
-                  value: _selectedFilter,
-                  decoration: InputDecoration(
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                  ),
-                  items:
-                      <String>['Theo tuần', 'Theo tháng'].map((String value) {
-                    return DropdownMenuItem<String>(
-                      value: value,
-                      child: Text(value),
-                    );
-                  }).toList(),
-                  onChanged: (String? newValue) {
-                    setState(() {
-                      _selectedFilter = newValue!;
-                      // Logic to handle content based on the selected filter
-                    });
-                  },
-                ),
-              ),
-            ],
-          );
-        },
+          ],
+        ),
       ),
     );
   }

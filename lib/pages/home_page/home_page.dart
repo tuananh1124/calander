@@ -82,7 +82,7 @@ class _HomePageState extends State<HomePage>
             _buildDateDropdown(),
           ],
         ),
-        _buildSearchBar(),
+        SearchBarWithDropdown(),
         _buildAddTaskButtons(),
         _buildDateBoxes(),
         _buildTabBar(),
@@ -250,15 +250,6 @@ class _HomePageState extends State<HomePage>
       tabs: [
         Tab(text: 'Sáng'),
         Tab(text: 'Chiều'),
-      ],
-    );
-  }
-
-  Widget _buildSearchBar() {
-    return TabBarView(
-      controller: _tabController,
-      children: [
-        Center(child: SearchBarWithDropdown()),
       ],
     );
   }
