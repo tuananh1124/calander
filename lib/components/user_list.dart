@@ -10,6 +10,7 @@ class MyList extends StatefulWidget {
 }
 
 class _MyListState extends State<MyList> {
+  Map<String, bool> _expansionState = {};
   final List<Map<String, dynamic>> dataList = [
     {
       'name': 'Nguyễn Tuấn Anh',
@@ -91,6 +92,7 @@ class _MyListState extends State<MyList> {
     _allDepartmentItems = _flattenDepartmentData(departmentData);
     _searchEmployeeController.addListener(_filterEmployees);
     _searchDepartmentController.addListener(_filterDepartments);
+    _initExpansionState(departmentData);
   }
 
   @override
@@ -100,7 +102,26 @@ class _MyListState extends State<MyList> {
     super.dispose();
   }
 
-  // Flatten department data to a single list of strings for searching
+  void _initExpansionState(List<Map<String, dynamic>> departments) {
+    for (var dept in departments) {
+      _expansionState[dept['department']] = false;
+      if (dept['subgroups'] != null) {
+        _initSubgroupExpansionState(dept['subgroups']);
+      }
+    }
+  }
+
+  void _initSubgroupExpansionState(List<dynamic> subgroups) {
+    for (var subgroup in subgroups) {
+      if (subgroup is Map<String, dynamic>) {
+        _expansionState[subgroup['name']] = false;
+        if (subgroup['subgroups'] != null) {
+          _initSubgroupExpansionState(subgroup['subgroups']);
+        }
+      }
+    }
+  }
+
   List<String> _flattenDepartmentData(
       List<Map<String, dynamic>> departmentData) {
     List<String> result = [];
@@ -196,7 +217,7 @@ class _MyListState extends State<MyList> {
       ),
       body: GestureDetector(
         onTap: () {
-          FocusScope.of(context).unfocus(); // Dismiss the keyboard
+          FocusScope.of(context).unfocus();
         },
         child: DefaultTabController(
           length: 2,
@@ -223,8 +244,7 @@ class _MyListState extends State<MyList> {
                           _buildSearchBar(
                               _searchEmployeeController, 'Tìm kiếm nhân viên'),
                           Container(
-                            height: MediaQuery.of(context).size.height -
-                                150, // Adjust height as needed
+                            height: MediaQuery.of(context).size.height - 150,
                             child: _buildEmployeeList(),
                           ),
                         ],
@@ -287,6 +307,7 @@ class _MyListState extends State<MyList> {
   Widget _buildDepartmentList() {
     return ListView.builder(
       shrinkWrap: true,
+      physics: NeverScrollableScrollPhysics(),
       itemCount: _filteredDepartmentData.length,
       itemBuilder: (context, index) {
         final department = _filteredDepartmentData[index];
@@ -294,14 +315,8 @@ class _MyListState extends State<MyList> {
         final subgroups = department['subgroups'] as List<dynamic>?;
 
         if (subgroups != null && subgroups.isNotEmpty) {
-          // Display an expandable tile if there are subgroups
-          return ExpansionTile(
-            title: Text(departmentName,
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w400)),
-            children: _buildSubgroupWidgets(subgroups),
-          );
+          return _buildExpandableSubgroup(departmentName, subgroups);
         } else {
-          // Display a simple ListTile if there are no subgroups
           return ListTile(
             title: Text(departmentName,
                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.w400)),
@@ -309,6 +324,31 @@ class _MyListState extends State<MyList> {
           );
         }
       },
+    );
+  }
+
+  Widget _buildExpandableSubgroup(String name, List<dynamic> subgroups) {
+    return ExpansionTile(
+      key: Key(name), // Thêm key để Flutter có thể theo dõi trạng thái
+      initiallyExpanded: _expansionState[name] ?? false,
+      onExpansionChanged: (isExpanded) {
+        setState(() {
+          _expansionState[name] = isExpanded;
+        });
+      },
+      title: Text(name,
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w400)),
+      children: subgroups.map<Widget>((subgroup) {
+        if (subgroup is Map<String, dynamic>) {
+          return _buildExpandableSubgroup(
+              subgroup['name'], subgroup['subgroups'] ?? []);
+        } else {
+          return ListTile(
+            title: Text(subgroup),
+            onTap: () => _onGroupSelected(subgroup),
+          );
+        }
+      }).toList(),
     );
   }
 

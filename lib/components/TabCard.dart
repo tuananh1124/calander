@@ -114,8 +114,8 @@ class ExpandableCard extends StatelessWidget {
 
   Widget _buildTimeInfo(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
-    final iconSize = screenWidth * 0.04; // Tỉ lệ kích thước icon
-    final textSize = screenWidth * 0.04; // Tỉ lệ kích thước chữ
+    final iconSize = screenWidth * 0.03; // Tỉ lệ kích thước icon
+    final textSize = screenWidth * 0.03; // Tỉ lệ kích thước chữ
 
     return Row(
       children: [
@@ -128,8 +128,8 @@ class ExpandableCard extends StatelessWidget {
 
   Widget _buildDateInfo(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
-    final iconSize = screenWidth * 0.04; // Tỉ lệ kích thước icon
-    final textSize = screenWidth * 0.04; // Tỉ lệ kích thước chữ
+    final iconSize = screenWidth * 0.03; // Tỉ lệ kích thước icon
+    final textSize = screenWidth * 0.03; // Tỉ lệ kích thước chữ
 
     return Row(
       children: [
@@ -142,7 +142,7 @@ class ExpandableCard extends StatelessWidget {
 
   Widget _buildActionButtons(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
-    final buttonSize = screenWidth * 0.08; // Tỉ lệ kích thước nút
+    final buttonSize = screenWidth * 0.05; // Tỉ lệ kích thước nút
 
     return Row(
       children: [

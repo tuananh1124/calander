@@ -2,15 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_calendar/components/TabCard_list.dart';
 import 'package:flutter_calendar/components/animation_page.dart';
-import 'package:flutter_calendar/components/dateBox_item.dart';
 import 'package:flutter_calendar/pages/add_task_page.dart';
-import 'package:flutter_calendar/pages/add_task_page/add_task_page.dart';
-import 'package:flutter_calendar/pages/content_location_page/content_location.dart';
-import 'package:flutter_calendar/pages/content_persion_page/content_persion_page.dart';
-import 'package:flutter_calendar/pages/content_resourc_page/content_resourc_page.dart';
 import 'package:flutter_calendar/pages/home_page/bloc/date_bloc.dart';
 import 'package:flutter_calendar/pages/menu_drawer.dart';
 import 'package:flutter_calendar/pages/resource_mana_page.dart';
+import 'package:flutter_calendar/pages/search_bar.dart';
 import 'package:intl/intl.dart';
 
 class HomePage extends StatefulWidget {
@@ -21,13 +17,11 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  String _selectedDate = DateFormat('dd').format(DateTime.now());
-  String _selectedDropdownDate =
-      DateFormat('dd/MM/yyyy').format(DateTime.now());
+  String _selectedDayOfWeek =
+      DateFormat('EEEE').format(DateTime.now()); // Lưu trữ thứ trong tuần
   DateTime _currentDate = DateTime.now();
   bool _hasChangedWeek = false;
   late DateBloc _dateBloc;
-  int? _selectedIndex;
 
   @override
   void initState() {
@@ -50,42 +44,50 @@ class _HomePageState extends State<HomePage>
       create: (context) => _dateBloc,
       child: Scaffold(
         backgroundColor: Colors.white,
-        appBar: AppBar(
-          backgroundColor: Colors.blue,
-          leading: Builder(
-            builder: (context) => IconButton(
-              icon: Icon(Icons.format_list_bulleted,
-                  color: Colors.white, size: 24),
-              onPressed: () => Scaffold.of(context).openDrawer(),
-            ),
-          ),
-          title: Text("Lịch công tác đơn vị",
-              style: TextStyle(color: Colors.white)),
-          centerTitle: true,
-          actions: [
-            IconButton(
-              icon: Icon(Icons.notifications, color: Colors.white, size: 24),
-              onPressed: () {
-                // Handle notification button press
-              },
-            ),
-          ],
-        ),
+        appBar: _buildAppBar(),
         drawer: CustomDrawer(),
-        body: Column(
-          children: [
-            Row(
-              children: [
-                _buildDateDropdown(),
-              ],
-            ),
-            _buildAddTaskButtons(),
-            _buildDateBoxes(),
-            _buildTabBar(),
-            Expanded(child: _buildTabBarView()),
-          ],
+        body: _buildBody(),
+      ),
+    );
+  }
+
+  AppBar _buildAppBar() {
+    return AppBar(
+      backgroundColor: Colors.blue,
+      leading: Builder(
+        builder: (context) => IconButton(
+          icon: Icon(Icons.format_list_bulleted, color: Colors.white, size: 24),
+          onPressed: () => Scaffold.of(context).openDrawer(),
         ),
       ),
+      title:
+          Text("Lịch công tác đơn vị", style: TextStyle(color: Colors.white)),
+      centerTitle: true,
+      actions: [
+        IconButton(
+          icon: Icon(Icons.notifications, color: Colors.white, size: 24),
+          onPressed: () {
+            // Handle notification button press
+          },
+        ),
+      ],
+    );
+  }
+
+  Widget _buildBody() {
+    return Column(
+      children: [
+        Row(
+          children: [
+            _buildDateDropdown(),
+          ],
+        ),
+        _buildSearchBar(),
+        _buildAddTaskButtons(),
+        _buildDateBoxes(),
+        _buildTabBar(),
+        Expanded(child: _buildTabBarView()),
+      ],
     );
   }
 
@@ -98,46 +100,25 @@ class _HomePageState extends State<HomePage>
         children: [
           IconButton(
             icon: Icon(Icons.arrow_left),
-            onPressed: () {
-              _changeWeek(-1); // Chuyển tuần trước
-              setState(() {
-                _hasChangedWeek = true; // Đánh dấu đã thay đổi tuần
-              });
-            },
+            onPressed: () => _changeWeek(-1),
           ),
           GestureDetector(
             onTap: () => _selectDate(context),
             child: Text(
-              _selectedDropdownDate,
+              DateFormat('dd/MM/yyyy').format(_currentDate),
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
           ),
           IconButton(
             icon: Icon(Icons.arrow_right),
-            onPressed: () {
-              _changeWeek(1); // Chuyển tuần sau
-              setState(() {
-                _hasChangedWeek = true; // Đánh dấu đã thay đổi tuần
-              });
-            },
+            onPressed: () => _changeWeek(1),
           ),
-          Row(
-            children: [
-              // Nút 'Tuần hiện tại' sẽ xuất hiện sau nút điều hướng tuần
-              if (_hasChangedWeek)
-                TextButton(
-                  onPressed: () {
-                    _goToCurrentWeek(); // Quay lại tuần hiện tại
-                    setState(() {
-                      _hasChangedWeek =
-                          false; // Đặt lại giá trị của _hasChangedWeek
-                    });
-                  },
-                  child: Text('Tuần hiện tại',
-                      style: TextStyle(color: Colors.black)),
-                ),
-            ],
-          ),
+          if (_hasChangedWeek)
+            TextButton(
+              onPressed: _goToCurrentWeek,
+              child:
+                  Text('Tuần hiện tại', style: TextStyle(color: Colors.black)),
+            ),
         ],
       ),
     );
@@ -153,8 +134,7 @@ class _HomePageState extends State<HomePage>
     if (picked != null) {
       setState(() {
         _currentDate = picked;
-        _selectedDropdownDate = DateFormat('dd/MM/yyyy').format(picked);
-        // Gửi ngày mới đến Bloc
+        _selectedDayOfWeek = DateFormat('EEEE').format(picked);
         context.read<DateBloc>().add(LoadData(picked));
       });
     }
@@ -163,16 +143,16 @@ class _HomePageState extends State<HomePage>
   void _changeWeek(int increment) {
     setState(() {
       _currentDate = _currentDate.add(Duration(days: increment * 7));
-      _selectedDropdownDate = DateFormat('dd/MM/yyyy').format(_currentDate);
       _dateBloc.add(LoadData(_currentDate));
+      _hasChangedWeek = true;
     });
   }
 
   void _goToCurrentWeek() {
     setState(() {
       _currentDate = DateTime.now();
-      _selectedDropdownDate = DateFormat('dd/MM/yyyy').format(_currentDate);
       _dateBloc.add(LoadData(_currentDate));
+      _hasChangedWeek = false;
     });
   }
 
@@ -185,31 +165,26 @@ class _HomePageState extends State<HomePage>
         children: [
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: Colors.blue),
-            onPressed: () => _showAddTaskModal(context),
+            onPressed: () => _navigateToAddTaskPage(context),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Icon(Icons.add, color: Colors.white),
                 SizedBox(width: 3),
-                Text(
-                  "Add task",
-                  style: TextStyle(color: Colors.white),
-                ),
+                Text("Add task", style: TextStyle(color: Colors.white)),
               ],
             ),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: Colors.blue),
-            onPressed: () => _showResourceManagementModal(context),
+            onPressed: () => _navigateToResourceManagementPage(context),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Icon(Icons.manage_accounts, color: Colors.white),
                 SizedBox(width: 3),
-                Text(
-                  "Quản lí tài nguyên",
-                  style: TextStyle(color: Colors.white),
-                ),
+                Text("Quản lí tài nguyên",
+                    style: TextStyle(color: Colors.white)),
               ],
             ),
           ),
@@ -233,9 +208,9 @@ class _HomePageState extends State<HomePage>
               children: state.daysList.map((day) {
                 final isToday = day['date'] ==
                     DateFormat('dd/MM/yyyy').format(DateTime.now());
-                final isSelected = day['dayMonth'] == _selectedDate;
+                final isSelected = day['dayOfWeek'] == _selectedDayOfWeek;
                 return GestureDetector(
-                  onTap: () => _selectDateBox(day['dayMonth']!),
+                  onTap: () => _selectDateBox(day['dayOfWeek']!),
                   child: Padding(
                     padding: const EdgeInsets.all(3.0),
                     child: Container(
@@ -279,6 +254,15 @@ class _HomePageState extends State<HomePage>
     );
   }
 
+  Widget _buildSearchBar() {
+    return TabBarView(
+      controller: _tabController,
+      children: [
+        Center(child: SearchBarWithDropdown()),
+      ],
+    );
+  }
+
   Widget _buildTabBarView() {
     return TabBarView(
       controller: _tabController,
@@ -289,9 +273,9 @@ class _HomePageState extends State<HomePage>
     );
   }
 
-  void _selectDateBox(String date) {
+  void _selectDateBox(String dayOfWeek) {
     setState(() {
-      _selectedDate = date;
+      _selectedDayOfWeek = dayOfWeek;
     });
   }
 
@@ -300,18 +284,15 @@ class _HomePageState extends State<HomePage>
   }
 
   void _navigateToAddTaskPage(BuildContext context) {
-    Navigator.of(context).push(SlideFromRightPageRoute(
-      page: AddTaskPage(),
-    ));
-  }
-
-  void _navigateToResourceManagementPage(BuildContext context) {
-    Navigator.of(context).push(SlideFromRightPageRoute(
-      page: ResourceManagementPage(),
-    ));
+    Navigator.of(context).push(SlideFromRightPageRoute(page: AddTaskPage()));
   }
 
   void _showResourceManagementModal(BuildContext context) {
     _navigateToResourceManagementPage(context);
+  }
+
+  void _navigateToResourceManagementPage(BuildContext context) {
+    Navigator.of(context)
+        .push(SlideFromRightPageRoute(page: ResourceManagementPage()));
   }
 }
