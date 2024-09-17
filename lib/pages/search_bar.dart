@@ -7,7 +7,9 @@ class SearchBarWithDropdown extends StatefulWidget {
 
 class _SearchBarWithDropdownState extends State<SearchBarWithDropdown> {
   String _selectedFilter = 'Theo tuần';
-  String? _selectedUnit;
+  String? _selectedUnit; // Chỉ một phòng ban được chọn
+  String _searchQuery = '';
+
   List<Map<String, dynamic>> unitData = [
     {'department': 'Vụ Tổ Chức Cán Bộ'},
     {'department': 'Phòng Tổng hợp'},
@@ -33,14 +35,20 @@ class _SearchBarWithDropdownState extends State<SearchBarWithDropdown> {
     // ... thêm các phòng ban khác nếu cần
   ];
 
-  List<String> getDropdownItems(List<Map<String, dynamic>> data) {
-    return data.map((unit) => unit['department'] as String).toList();
+  List<String> getFilteredDropdownItems() {
+    List<String> items = unitData
+        .where((unit) => unit['department']
+            .toString()
+            .toLowerCase()
+            .contains(_searchQuery.toLowerCase()))
+        .map((unit) => unit['department'] as String)
+        .toList();
+    items.sort(); // Sắp xếp danh sách theo thứ tự A-Z
+    return items;
   }
 
   @override
   Widget build(BuildContext context) {
-    List<String> unitItems = getDropdownItems(unitData);
-
     return GestureDetector(
       onTap: () {
         FocusScope.of(context).unfocus();
@@ -54,80 +62,141 @@ class _SearchBarWithDropdownState extends State<SearchBarWithDropdown> {
                 children: [
                   Flexible(
                     flex: 2,
-                    child: PopupMenuButton<String>(
-                      onSelected: (String newValue) {
-                        setState(() {
-                          _selectedUnit = newValue;
-                        });
-                      },
-                      child: Container(
-                        padding:
-                            EdgeInsets.symmetric(vertical: 12, horizontal: 8),
-                        decoration: BoxDecoration(
-                          border: Border.all(color: Colors.grey),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: Text(
-                                _selectedUnit ?? 'Chọn phòng ban',
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                            Icon(Icons.arrow_drop_down),
-                          ],
-                        ),
-                      ),
-                      itemBuilder: (BuildContext context) {
-                        return unitItems.map((String value) {
-                          return PopupMenuItem<String>(
-                            value: value,
-                            child: Text(
-                              value,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          );
-                        }).toList();
-                      },
-                    ),
+                    child: buildSearchBar(),
                   ),
-                  SizedBox(width: 8),
+                  SizedBox(width: 4),
                   Flexible(
                     flex: 1,
-                    child: DropdownButtonFormField<String>(
-                      value: _selectedFilter,
-                      decoration: InputDecoration(
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                      ),
-                      icon: _selectedFilter.isNotEmpty
-                          ? SizedBox.shrink()
-                          : Icon(Icons.arrow_drop_down),
-                      items: <String>['Theo tuần', 'Theo tháng']
-                          .map((String value) {
-                        return DropdownMenuItem<String>(
-                          value: value,
-                          child: Text(
-                            value,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        );
-                      }).toList(),
-                      onChanged: (String? newValue) {
-                        setState(() {
-                          _selectedFilter = newValue!;
-                        });
-                      },
-                    ),
+                    child: buildDropdownButtonFormField(),
                   ),
                 ],
+              ),
+            ),
+            Visibility(
+              visible: _selectedFilter == 'Theo tháng',
+              child: Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: buildDecoratedContainer('Theo tháng'),
               ),
             ),
           ],
         ),
       ),
+    );
+  }
+
+  Widget buildSearchBar() {
+    return GestureDetector(
+      onTap: () {
+        _showUnitDropdown();
+      },
+      child: Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: Container(
+          padding: EdgeInsets.all(8.0),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: Colors.grey),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Text(
+                  _selectedUnit ?? 'Tìm kiếm phòng ban',
+                  style: TextStyle(color: Colors.black54),
+                ),
+              ),
+              Icon(Icons.search),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showUnitDropdown() {
+    showModalBottomSheet(
+      context: context,
+      builder: (BuildContext context) {
+        return Container(
+          padding: EdgeInsets.all(16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                onChanged: (value) {
+                  setState(() {
+                    _searchQuery = value;
+                  });
+                },
+                decoration: InputDecoration(
+                  labelText: 'Tìm kiếm phòng ban',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+              ),
+              Expanded(
+                child: ListView(
+                  children: getFilteredDropdownItems().map((unit) {
+                    return ListTile(
+                      title: Text(unit),
+                      trailing: _selectedUnit == unit
+                          ? Icon(Icons.check, color: Colors.green)
+                          : null,
+                      onTap: () {
+                        setState(() {
+                          _selectedUnit = unit;
+                        });
+                        Navigator.pop(context);
+                      },
+                    );
+                  }).toList(),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget buildDropdownButtonFormField() {
+    return DropdownButtonFormField<String>(
+      value: _selectedFilter,
+      decoration: InputDecoration(
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: BorderSide(color: Colors.black),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: BorderSide(color: Colors.black),
+        ),
+      ),
+      items: <String>['Theo tuần', 'Theo tháng'].map((String value) {
+        return DropdownMenuItem<String>(
+          value: value,
+          child: Text(value, overflow: TextOverflow.ellipsis),
+        );
+      }).toList(),
+      onChanged: (String? newValue) {
+        setState(() {
+          _selectedFilter = newValue!;
+        });
+      },
+    );
+  }
+
+  Widget buildDecoratedContainer(String text) {
+    return Container(
+      padding: EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        border: Border.all(color: Colors.grey),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Text(text),
     );
   }
 }
