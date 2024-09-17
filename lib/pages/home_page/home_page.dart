@@ -77,11 +77,7 @@ class _HomePageState extends State<HomePage>
   Widget _buildBody() {
     return Column(
       children: [
-        Row(
-          children: [
-            _buildDateDropdown(),
-          ],
-        ),
+        _buildDateDropdown(),
         SearchBarWithDropdown(),
         _buildAddTaskButtons(),
         _buildDateBoxes(),
