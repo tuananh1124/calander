@@ -3,15 +3,78 @@ import 'package:flutter/material.dart';
 class MyList extends StatefulWidget {
   final Function(String name, String position, String status) onItemSelected;
 
-  const MyList({Key? key, required this.onItemSelected}) : super(key: key);
+  MyList({required this.onItemSelected});
 
   @override
   _MyListState createState() => _MyListState();
 }
 
 class _MyListState extends State<MyList> with SingleTickerProviderStateMixin {
-  late TabController _tabController;
-  final Map<String, bool> _expansionState = {};
+  TabController? _tabController;
+  Map<String, bool> _expansionState = {};
+  final List<Map<String, dynamic>> dataList = [
+    {
+      'name': 'Nguyễn Tuấn Anh',
+      'position': 'Developer',
+      'status': 'Chưa xác nhận',
+      'group': 'Phòng Công tác đảng và đoàn thể'
+    },
+    {
+      'name': 'Trần Văn B',
+      'position': 'Designer',
+      'status': 'Chưa xác nhận',
+      'group': 'Phòng Công tác đảng và đoàn thể'
+    },
+    {
+      'name': 'Lê Văn C',
+      'position': 'Tester',
+      'status': 'Chưa xác nhận',
+      'group': 'Phòng Cá'
+    },
+    {
+      'name': 'Nguyễn A',
+      'position': 'Developer',
+      'status': 'Chưa xác nhận',
+      'group': 'Phòng Cá'
+    },
+    {
+      'name': 'Văn B',
+      'position': 'Designer',
+      'status': 'Chưa xác nhận',
+      'group': 'Phòng Thi đua - Khen thưởng'
+    },
+    {
+      'name': 'Lê C',
+      'position': 'Tester',
+      'status': 'Chưa xác nhận',
+      'group': 'Nhóm A'
+    },
+    // ... (other items)
+  ];
+
+  final List<Map<String, dynamic>> departmentData = [
+    {
+      'department': 'Vụ Tổ Chức Cán Bộ',
+      'subgroups': [
+        {
+          'name': 'Phòng Công tác đảng và đoàn thể',
+          'subgroups': [
+            'Nhóm 1',
+            'Nhóm 2',
+          ]
+        },
+        'Phòng Thi đua - Khen thưởng',
+        'Phòng Tổ chức - Cán bộ'
+      ]
+    },
+    {
+      'department': 'Phòng Tổng hợp',
+      'subgroups': ['Nhóm A', 'Nhóm B']
+    },
+    {'department': 'Phòng Cá'},
+    // ... (other items)
+  ];
+
   String? _selectedGroup;
   String? _selectedName;
   List<Map<String, dynamic>> _filteredDataList = [];
@@ -26,17 +89,17 @@ class _MyListState extends State<MyList> with SingleTickerProviderStateMixin {
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
-    _filteredDataList = DataService.dataList;
-    _filteredDepartmentData = DataService.departmentData;
-    _allDepartmentItems = _flattenDepartmentData(DataService.departmentData);
+    _filteredDataList = dataList;
+    _filteredDepartmentData = departmentData;
+    _allDepartmentItems = _flattenDepartmentData(departmentData);
     _searchEmployeeController.addListener(_filterEmployees);
     _searchDepartmentController.addListener(_filterDepartments);
-    _initExpansionState(DataService.departmentData);
+    _initExpansionState(departmentData);
   }
 
   @override
   void dispose() {
-    _tabController.dispose();
+    _tabController?.dispose();
     _searchEmployeeController.dispose();
     _searchDepartmentController.dispose();
     super.dispose();
@@ -46,43 +109,59 @@ class _MyListState extends State<MyList> with SingleTickerProviderStateMixin {
   Widget build(BuildContext context) {
     return Scaffold(
       resizeToAvoidBottomInset: true,
-      appBar: _buildAppBar(),
+      appBar: AppBar(
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back_ios_new_outlined,
+              color: Colors.white, size: 16),
+          onPressed: () {
+            Navigator.of(context).pop();
+          },
+        ),
+        title:
+            Text('Chọn người tham dự', style: TextStyle(color: Colors.white)),
+        backgroundColor: Colors.blue,
+      ),
       body: GestureDetector(
-        onTap: () => FocusScope.of(context).unfocus(),
-        child: _buildBody(),
-      ),
-    );
-  }
-
-  AppBar _buildAppBar() {
-    return AppBar(
-      leading: IconButton(
-        icon: const Icon(Icons.arrow_back_ios_new_outlined,
-            color: Colors.white, size: 16),
-        onPressed: () => Navigator.of(context).pop(),
-      ),
-      title: const Text('Chọn người tham dự',
-          style: TextStyle(color: Colors.white)),
-      backgroundColor: Colors.blue,
-    );
-  }
-
-  Widget _buildBody() {
-    return DefaultTabController(
-      length: 2,
-      child: Column(
-        children: [
-          _buildTabBar(),
-          Expanded(
-            child: TabBarView(
-              controller: _tabController,
-              children: [
-                _buildDepartmentTab(),
-                _buildEmployeeTab(),
-              ],
-            ),
+        onTap: () {
+          FocusScope.of(context).unfocus();
+        },
+        child: DefaultTabController(
+          length: 2,
+          child: Column(
+            children: [
+              _buildTabBar(),
+              Expanded(
+                child: TabBarView(
+                  controller: _tabController,
+                  children: [
+                    SingleChildScrollView(
+                      child: Column(
+                        children: [
+                          _buildSearchBar(
+                              _searchDepartmentController, 'Tìm kiếm đơn vị'),
+                          _buildDepartmentList(),
+                        ],
+                      ),
+                    ),
+                    // Employee Tab
+                    SingleChildScrollView(
+                      child: Column(
+                        children: [
+                          _buildSearchBar(
+                              _searchEmployeeController, 'Tìm kiếm nhân viên'),
+                          SizedBox(
+                            height: MediaQuery.of(context).size.height - 150,
+                            child: _buildEmployeeList(),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
@@ -94,7 +173,7 @@ class _MyListState extends State<MyList> with SingleTickerProviderStateMixin {
       child: TabBar(
         controller: _tabController,
         indicatorColor: Colors.white,
-        indicator: const BoxDecoration(
+        indicator: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.only(
             topLeft: Radius.circular(10),
@@ -104,35 +183,10 @@ class _MyListState extends State<MyList> with SingleTickerProviderStateMixin {
         indicatorSize: TabBarIndicatorSize.tab,
         labelColor: Colors.blue,
         unselectedLabelColor: Colors.white,
-        labelPadding: const EdgeInsets.symmetric(vertical: 10),
-        tabs: const [
+        labelPadding: EdgeInsets.symmetric(vertical: 10),
+        tabs: [
           Tab(text: 'Đơn vị'),
           Tab(text: 'Nhân viên'),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildDepartmentTab() {
-    return SingleChildScrollView(
-      child: Column(
-        children: [
-          _buildSearchBar(_searchDepartmentController, 'Tìm kiếm đơn vị'),
-          _buildDepartmentList(),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildEmployeeTab() {
-    return SingleChildScrollView(
-      child: Column(
-        children: [
-          _buildSearchBar(_searchEmployeeController, 'Tìm kiếm nhân viên'),
-          SizedBox(
-            height: MediaQuery.of(context).size.height - 150,
-            child: _buildEmployeeList(),
-          ),
         ],
       ),
     );
@@ -145,7 +199,7 @@ class _MyListState extends State<MyList> with SingleTickerProviderStateMixin {
         controller: controller,
         decoration: InputDecoration(
           hintText: hintText,
-          prefixIcon: const Icon(Icons.search),
+          prefixIcon: Icon(Icons.search),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(20),
           ),
@@ -157,21 +211,60 @@ class _MyListState extends State<MyList> with SingleTickerProviderStateMixin {
   Widget _buildDepartmentList() {
     return ListView.builder(
       shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
+      physics: NeverScrollableScrollPhysics(),
       itemCount: _filteredDepartmentData.length,
       itemBuilder: (context, index) {
         final department = _filteredDepartmentData[index];
         final departmentName = department['department'];
         final subgroups = department['subgroups'] as List<dynamic>?;
+        final mainDepartmentEmployeeCount =
+            dataList.where((data) => data['group'] == departmentName).length;
+        final mainDepartmentEmployeeCountText = mainDepartmentEmployeeCount > 0
+            ? ' ($mainDepartmentEmployeeCount)'
+            : '';
+        final departmentTile = ListTile(
+          title: Text(
+            '$departmentName$mainDepartmentEmployeeCountText',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w400),
+          ),
+          onTap: () => _onGroupSelected(departmentName),
+        );
+        if (subgroups != null && subgroups.isNotEmpty) {
+          List<Widget> subgroupWidgets = subgroups.map<Widget>((subgroup) {
+            String subgroupName;
+            if (subgroup is Map) {
+              subgroupName = subgroup['name'];
+            } else if (subgroup is String) {
+              subgroupName = subgroup;
+            } else {
+              return SizedBox
+                  .shrink(); // Nếu không xác định được, trả về widget rỗng
+            }
 
-        return subgroups != null && subgroups.isNotEmpty
-            ? _buildExpandableSubgroup(departmentName, subgroups)
-            : ListTile(
-                title: Text(departmentName,
-                    style: const TextStyle(
-                        fontSize: 16, fontWeight: FontWeight.w400)),
-                onTap: () => _onGroupSelected(departmentName),
-              );
+            final subgroupEmployeeCount =
+                dataList.where((data) => data['group'] == subgroupName).length;
+            final subgroupEmployeeCountText =
+                subgroupEmployeeCount > 0 ? ' ($subgroupEmployeeCount)' : '';
+
+            return ListTile(
+              title: Text(
+                '$subgroupName$subgroupEmployeeCountText',
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w300),
+              ),
+              onTap: () => _onGroupSelected(subgroupName),
+            );
+          }).toList();
+
+          return ExpansionTile(
+            title: Text(
+              '$departmentName$mainDepartmentEmployeeCountText',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w400),
+            ),
+            children: subgroupWidgets,
+          );
+        } else {
+          return departmentTile;
+        }
       },
     );
   }
@@ -181,7 +274,7 @@ class _MyListState extends State<MyList> with SingleTickerProviderStateMixin {
       itemCount: _filteredDataList.length,
       itemBuilder: (context, index) {
         if (index >= _filteredDataList.length) {
-          return const SizedBox.shrink();
+          return SizedBox.shrink(); // Hoặc có thể hiển thị một widget trống
         }
 
         final data = _filteredDataList[index];
@@ -190,7 +283,21 @@ class _MyListState extends State<MyList> with SingleTickerProviderStateMixin {
           title: Text(data['name'] ?? ''),
           subtitle: Text(data['position'] ?? ''),
           trailing: ElevatedButton(
-            onPressed: () => _onEmployeeSelected(data, isSelected),
+            onPressed: () {
+              setState(() {
+                if (isSelected) {
+                  _selectedName = null;
+                  widget.onItemSelected('', '', '');
+                } else {
+                  _selectedName = data['name'];
+                  widget.onItemSelected(
+                    data['name'] ?? '',
+                    data['position'] ?? '',
+                    data['status'] ?? '',
+                  );
+                }
+              });
+            },
             style: ElevatedButton.styleFrom(
               backgroundColor: isSelected ? Colors.red : Colors.blue,
             ),
@@ -198,42 +305,6 @@ class _MyListState extends State<MyList> with SingleTickerProviderStateMixin {
           ),
         );
       },
-    );
-  }
-
-  Widget _buildExpandableSubgroup(
-      String departmentName, List<dynamic> subgroups) {
-    return ExpansionTile(
-      title: Text(departmentName),
-      initiallyExpanded: _expansionState[departmentName] ?? false,
-      onExpansionChanged: (isExpanded) {
-        setState(() {
-          _expansionState[departmentName] = isExpanded;
-        });
-      },
-      children: subgroups.map((subgroup) {
-        if (subgroup is String) {
-          return ListTile(
-            title: Text(subgroup,
-                style:
-                    const TextStyle(fontSize: 14, fontWeight: FontWeight.w300)),
-            onTap: () => _onGroupSelected(subgroup),
-          );
-        } else if (subgroup is Map<String, dynamic>) {
-          final subgroupName = subgroup['name'] ?? '';
-          final nestedSubgroups = subgroup['subgroups'] as List<dynamic>?;
-
-          return nestedSubgroups != null && nestedSubgroups.isNotEmpty
-              ? _buildExpandableSubgroup(subgroupName, nestedSubgroups)
-              : ListTile(
-                  title: Text(subgroupName,
-                      style: const TextStyle(
-                          fontSize: 14, fontWeight: FontWeight.w300)),
-                  onTap: () => _onGroupSelected(subgroupName),
-                );
-        }
-        return Container();
-      }).toList(),
     );
   }
 
@@ -283,48 +354,84 @@ class _MyListState extends State<MyList> with SingleTickerProviderStateMixin {
     return result;
   }
 
+  Widget _buildExpandableSubgroup(
+      String departmentName, List<dynamic> subgroups) {
+    return ExpansionTile(
+      title: Text(departmentName),
+      initiallyExpanded: _expansionState[departmentName] ?? false,
+      onExpansionChanged: (isExpanded) {
+        setState(() {
+          _expansionState[departmentName] = isExpanded;
+        });
+      },
+      children: subgroups.map((subgroup) {
+        if (subgroup is String) {
+          return ListTile(
+            title: Text(subgroup,
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w300)),
+            onTap: () => _onGroupSelected(subgroup),
+          );
+        } else if (subgroup is Map<String, dynamic>) {
+          final subgroupName = subgroup['name'] ?? '';
+          final nestedSubgroups = subgroup['subgroups'] as List<dynamic>?;
+
+          return nestedSubgroups != null && nestedSubgroups.isNotEmpty
+              ? _buildExpandableSubgroup(subgroupName, nestedSubgroups)
+              : ListTile(
+                  title: Text(subgroupName,
+                      style:
+                          TextStyle(fontSize: 14, fontWeight: FontWeight.w300)),
+                  onTap: () => _onGroupSelected(subgroupName),
+                );
+        }
+        return Container();
+      }).toList(),
+    );
+  }
+
   void _filterDepartments() {
     final query = _searchDepartmentController.text.toLowerCase();
+
     setState(() {
-      _filteredDepartmentData = query.isEmpty
-          ? DataService.departmentData
-          : DataService.departmentData
-              .where((department) => _departmentMatchesQuery(department, query))
-              .toList();
+      if (query.isEmpty) {
+        _filteredDepartmentData = departmentData;
+      } else {
+        _filteredDepartmentData = departmentData.where((department) {
+          final departmentMatches =
+              department['department'].toLowerCase().contains(query);
+          bool subgroupMatches(dynamic subgroup) {
+            if (subgroup is String) {
+              return subgroup.toLowerCase().contains(query);
+            } else if (subgroup is Map<String, dynamic>) {
+              final nameMatches =
+                  subgroup['name'].toLowerCase().contains(query);
+              final nestedSubgroupMatches =
+                  (subgroup['subgroups'] as List<dynamic>?)
+                          ?.any(subgroupMatches) ??
+                      false;
+              return nameMatches || nestedSubgroupMatches;
+            }
+            return false;
+          }
+
+          final subgroups = department['subgroups'] as List<dynamic>?;
+          final anySubgroupMatches = subgroups?.any(subgroupMatches) ?? false;
+
+          return departmentMatches || anySubgroupMatches;
+        }).toList();
+      }
     });
-  }
-
-  bool _departmentMatchesQuery(Map<String, dynamic> department, String query) {
-    final departmentMatches =
-        department['department'].toLowerCase().contains(query);
-    final subgroups = department['subgroups'] as List<dynamic>?;
-    final anySubgroupMatches =
-        subgroups?.any((subgroup) => _subgroupMatchesQuery(subgroup, query)) ??
-            false;
-    return departmentMatches || anySubgroupMatches;
-  }
-
-  bool _subgroupMatchesQuery(dynamic subgroup, String query) {
-    if (subgroup is String) {
-      return subgroup.toLowerCase().contains(query);
-    } else if (subgroup is Map<String, dynamic>) {
-      final nameMatches = subgroup['name'].toLowerCase().contains(query);
-      final nestedSubgroupMatches = (subgroup['subgroups'] as List<dynamic>?)
-              ?.any((nestedSubgroup) =>
-                  _subgroupMatchesQuery(nestedSubgroup, query)) ??
-          false;
-      return nameMatches || nestedSubgroupMatches;
-    }
-    return false;
   }
 
   void _filterEmployees() {
     final query = _searchEmployeeController.text.toLowerCase();
+
     setState(() {
-      _filteredDataList = DataService.dataList
+      _filteredDataList = dataList
           .where((data) =>
-              (data['name']?.toLowerCase().contains(query) ?? false) ||
-              (data['position']?.toLowerCase().contains(query) ?? false))
+              data['group'] == _selectedGroup &&
+              ((data['name']?.toLowerCase().contains(query) ?? false) ||
+                  (data['position']?.toLowerCase().contains(query) ?? false)))
           .toList();
     });
   }
@@ -333,91 +440,12 @@ class _MyListState extends State<MyList> with SingleTickerProviderStateMixin {
     setState(() {
       _selectedGroup = group;
       _filteredDataList =
-          DataService.dataList.where((data) => data['group'] == group).toList();
+          dataList.where((data) => data['group'] == group).toList();
+      _searchEmployeeController.clear();
+
       if (_filteredDataList.isNotEmpty) {
-        _tabController.animateTo(1);
+        _tabController?.animateTo(1);
       }
     });
   }
-
-  void _onEmployeeSelected(Map<String, dynamic> data, bool isSelected) {
-    setState(() {
-      if (isSelected) {
-        _selectedName = null;
-        widget.onItemSelected('', '', '');
-      } else {
-        _selectedName = data['name'];
-        widget.onItemSelected(
-          data['name'] ?? '',
-          data['position'] ?? '',
-          data['status'] ?? '',
-        );
-      }
-    });
-  }
-}
-
-class DataService {
-  static final List<Map<String, dynamic>> dataList = [
-    {
-      'name': 'Nguyễn Tuấn Anh',
-      'position': 'Developer',
-      'status': 'Chưa xác nhận',
-      'group': 'Phòng Công tác đảng và đoàn thể'
-    },
-    {
-      'name': 'Trần Văn B',
-      'position': 'Designer',
-      'status': 'Chưa xác nhận',
-      'group': 'Phòng Công tác đảng và đoàn thể'
-    },
-    {
-      'name': 'Lê Văn C',
-      'position': 'Tester',
-      'status': 'Chưa xác nhận',
-      'group': 'Phòng Cá'
-    },
-    {
-      'name': 'Nguyễn A',
-      'position': 'Developer',
-      'status': 'Chưa xác nhận',
-      'group': 'Phòng Cá'
-    },
-    {
-      'name': 'Văn B',
-      'position': 'Designer',
-      'status': 'Chưa xác nhận',
-      'group': 'Phòng Thi đua - Khen thưởng'
-    },
-    {
-      'name': 'Lê C',
-      'position': 'Tester',
-      'status': 'Chưa xác nhận',
-      'group': 'Nhóm A'
-    },
-    // ... (other items)
-  ];
-
-  static final List<Map<String, dynamic>> departmentData = [
-    {
-      'department': 'Vụ Tổ Chức Cán Bộ',
-      'subgroups': [
-        {
-          'name': 'Phòng Công tác đảng và đoàn thể',
-          'subgroups': [
-            'Nhóm 1',
-            'Nhóm 2',
-          ]
-        },
-        'Phòng Thi đua - Khen thưởng',
-        'Phòng Tổ chức - Cán bộ'
-      ]
-    },
-    {
-      'department': 'Phòng Tổng hợp',
-      'subgroups': ['Nhóm A', 'Nhóm B']
-    },
-    {'department': 'Phòng Cá'},
-    // ... (other items)
-  ];
 }

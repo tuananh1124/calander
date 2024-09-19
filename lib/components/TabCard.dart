@@ -123,7 +123,7 @@ class ExpandableCard extends StatelessWidget {
   Widget _buildTimeInfo(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
     final iconSize = screenWidth * 0.03; // Tỉ lệ kích thước icon
-    final textSize = screenWidth * 0.03; // Tỉ lệ kích thước chữ
+    final textSize = screenWidth * 0.04; // Tỉ lệ kích thước chữ
 
     return Row(
       children: [
@@ -137,7 +137,7 @@ class ExpandableCard extends StatelessWidget {
   Widget _buildDateInfo(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
     final iconSize = screenWidth * 0.03; // Tỉ lệ kích thước icon
-    final textSize = screenWidth * 0.03; // Tỉ lệ kích thước chữ
+    final textSize = screenWidth * 0.04; // Tỉ lệ kích thước chữ
 
     return Row(
       children: [
@@ -150,7 +150,7 @@ class ExpandableCard extends StatelessWidget {
 
   Widget _buildActionButtons(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
-    final buttonSize = screenWidth * 0.055; // Tỉ lệ kích thước nút
+    final buttonSize = screenWidth * 0.06; // Tỉ lệ kích thước nút
 
     return Row(
       children: [
@@ -181,7 +181,7 @@ class ExpandableCard extends StatelessWidget {
   Widget _buildPerson(BuildContext context, String member) {
     final screenWidth = MediaQuery.of(context).size.width;
     final iconSize = screenWidth * 0.03; // Tỉ lệ kích thước icon
-    final textSize = screenWidth * 0.03; // Tỉ lệ kích thước chữ
+    final textSize = screenWidth * 0.04; // Tỉ lệ kích thước chữ
 
     // Tính số lượng thành viên
     List<String> membersList = member.split(',').map((e) => e.trim()).toList();
@@ -211,7 +211,7 @@ class ExpandableCard extends StatelessWidget {
   Widget _buildAttachment(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
     final iconSize = screenWidth * 0.03; // Tỉ lệ kích thước icon
-    final textSize = screenWidth * 0.03; // Tỉ lệ kích thước chữ
+    final textSize = screenWidth * 0.04; // Tỉ lệ kích thước chữ
 
     return Row(
       children: [
@@ -238,7 +238,7 @@ class ExpandableCard extends StatelessWidget {
           padding: EdgeInsets.symmetric(
               horizontal: size * 0.4, vertical: size * 0.2),
           child: Icon(icon,
-              color: Colors.white, size: size * 0.6), // Tỉ lệ kích thước icon
+              color: Colors.white, size: size * 0.7), // Tỉ lệ kích thước icon
         ),
       ),
     );

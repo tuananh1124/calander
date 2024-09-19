@@ -22,7 +22,7 @@ class _HomePageState extends State<HomePage>
   DateTime _currentDate = DateTime.now();
   bool _hasChangedWeek = false;
   late DateBloc _dateBloc;
-
+  String _selectedFilter = 'Theo tuần'; // Giá trị mặc định
   @override
   void initState() {
     super.initState();
@@ -80,9 +80,16 @@ class _HomePageState extends State<HomePage>
         _buildDateDropdown(),
         SearchBarWithDropdown(),
         _buildAddTaskButtons(),
-        _buildDateBoxes(),
-        _buildTabBar(),
-        Expanded(child: _buildTabBarView()),
+        if (_selectedFilter == 'Theo tuần') ...[
+          _buildDateBoxes(),
+          _buildTabBar(),
+          Expanded(child: _buildTabBarView()),
+        ] else if (_selectedFilter == 'Theo tháng') ...[
+          // Đặt các widget dành cho chế độ "Theo tháng" tại đây
+          // Ví dụ: Có thể chỉ hiển thị một widget duy nhất hoặc khác biệt
+          Center(child: Text('Chế độ Theo tháng đang được triển khai')),
+          // Thay đổi `_buildTabBarView` nếu cần
+        ],
       ],
     );
   }
