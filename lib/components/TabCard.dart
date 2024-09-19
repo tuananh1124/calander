@@ -47,14 +47,14 @@ class ExpandableCard extends StatelessWidget {
         color: Colors.white,
         child: ListTile(
           contentPadding: EdgeInsets.fromLTRB(10, 0, 10, 0),
-          title: _buildTitle(),
+          title: _buildTitle(context),
           subtitle: _buildSubtitle(context),
         ),
       ),
     );
   }
 
-  Widget _buildTitle() {
+  Widget _buildTitle(BuildContext context) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -70,6 +70,7 @@ class ExpandableCard extends StatelessWidget {
             textAlign: TextAlign.left,
           ),
         ),
+        _buildDateInfo(context), // Add _buildDateInfo here
         _buildErrorIndicator(),
       ],
     );
@@ -99,13 +100,20 @@ class ExpandableCard extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        SizedBox(height: 10),
+        SizedBox(height: 4),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             _buildTimeInfo(context),
-            _buildDateInfo(context),
+            // _buildDateInfo(context),
             _buildActionButtons(context),
+          ],
+        ),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            _buildPerson(context, member),
+            _buildAttachment(context),
           ],
         ),
       ],
@@ -142,7 +150,7 @@ class ExpandableCard extends StatelessWidget {
 
   Widget _buildActionButtons(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
-    final buttonSize = screenWidth * 0.05; // Tỉ lệ kích thước nút
+    final buttonSize = screenWidth * 0.055; // Tỉ lệ kích thước nút
 
     return Row(
       children: [
@@ -166,6 +174,50 @@ class ExpandableCard extends StatelessWidget {
           onTap: () => _showDeleteConfirmation(context),
           size: buttonSize,
         ),
+      ],
+    );
+  }
+
+  Widget _buildPerson(BuildContext context, String member) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final iconSize = screenWidth * 0.03; // Tỉ lệ kích thước icon
+    final textSize = screenWidth * 0.03; // Tỉ lệ kích thước chữ
+
+    // Tính số lượng thành viên
+    List<String> membersList = member.split(',').map((e) => e.trim()).toList();
+    int numberOfMembers = membersList.length;
+
+    // Tạo chuỗi hiển thị số lượng
+    String displayText = numberOfMembers > 1
+        ? "+$numberOfMembers"
+        : "1"; // Hiển thị số lượng thành viên
+
+    return Row(
+      children: [
+        Icon(Icons.person, color: Colors.grey, size: iconSize),
+        SizedBox(width: 8), // Khoảng cách giữa icon và text
+        Text(
+          'Số lượng người: ',
+          style: TextStyle(color: Colors.grey, fontSize: textSize),
+        ),
+        Text(
+          displayText,
+          style: TextStyle(color: Colors.grey, fontSize: textSize),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildAttachment(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final iconSize = screenWidth * 0.03; // Tỉ lệ kích thước icon
+    final textSize = screenWidth * 0.03; // Tỉ lệ kích thước chữ
+
+    return Row(
+      children: [
+        Icon(Icons.file_copy_rounded, color: Colors.grey, size: iconSize),
+        // Khoảng cách giữa icon và text
+        Text(file, style: TextStyle(color: Colors.grey, fontSize: textSize)),
       ],
     );
   }

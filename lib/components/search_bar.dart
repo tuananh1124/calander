@@ -58,18 +58,18 @@ class _SearchBarWithDropdownState extends State<SearchBarWithDropdown> {
           children: [
             Padding(
               padding: const EdgeInsets.all(8.0),
-              child: Row(
-                children: [
-                  Flexible(
-                    flex: 2,
-                    child: buildSearchBar(),
-                  ),
-                  SizedBox(width: 4),
-                  Flexible(
-                    flex: 1,
-                    child: buildDropdownButtonFormField(),
-                  ),
-                ],
+              child: IntrinsicHeight(
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: buildSearchBar(),
+                    ),
+                    SizedBox(width: 4),
+                    Expanded(
+                      child: buildDropdownButtonFormField(),
+                    ),
+                  ],
+                ),
               ),
             ),
             Visibility(
@@ -90,26 +90,23 @@ class _SearchBarWithDropdownState extends State<SearchBarWithDropdown> {
       onTap: () {
         _showUnitDropdown();
       },
-      child: Padding(
-        padding: const EdgeInsets.all(8.0),
-        child: Container(
-          padding: EdgeInsets.all(8.0),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: Colors.grey),
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Expanded(
-                child: Text(
-                  _selectedUnit ?? 'Tìm kiếm phòng ban',
-                  style: TextStyle(color: Colors.black54),
-                ),
+      child: Container(
+        padding: EdgeInsets.all(11.5),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: Colors.grey),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Expanded(
+              child: Text(
+                _selectedUnit ?? 'Tìm kiếm phòng ban',
+                style: TextStyle(color: Colors.black54),
               ),
-              Icon(Icons.search),
-            ],
-          ),
+            ),
+            Icon(Icons.search),
+          ],
         ),
       ),
     );
@@ -178,7 +175,10 @@ class _SearchBarWithDropdownState extends State<SearchBarWithDropdown> {
       items: <String>['Theo tuần', 'Theo tháng'].map((String value) {
         return DropdownMenuItem<String>(
           value: value,
-          child: Text(value, overflow: TextOverflow.ellipsis),
+          child: Text(
+            value,
+            style: TextStyle(fontSize: 14), // Điều chỉnh kích thước font
+          ),
         );
       }).toList(),
       onChanged: (String? newValue) {
@@ -191,7 +191,7 @@ class _SearchBarWithDropdownState extends State<SearchBarWithDropdown> {
 
   Widget buildDecoratedContainer(String text) {
     return Container(
-      padding: EdgeInsets.all(16),
+      padding: const EdgeInsets.all(8.0),
       decoration: BoxDecoration(
         border: Border.all(color: Colors.grey),
         borderRadius: BorderRadius.circular(10),

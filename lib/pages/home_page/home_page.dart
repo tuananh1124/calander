@@ -6,7 +6,7 @@ import 'package:flutter_calendar/pages/add_task_page.dart';
 import 'package:flutter_calendar/pages/home_page/bloc/date_bloc.dart';
 import 'package:flutter_calendar/pages/menu_drawer.dart';
 import 'package:flutter_calendar/pages/resource_mana_page.dart';
-import 'package:flutter_calendar/pages/search_bar.dart';
+import 'package:flutter_calendar/components/search_bar.dart';
 import 'package:intl/intl.dart';
 
 class HomePage extends StatefulWidget {
@@ -154,7 +154,7 @@ class _HomePageState extends State<HomePage>
 
   Widget _buildAddTaskButtons() {
     return Container(
-      padding: EdgeInsets.fromLTRB(16, 3, 16, 2),
+      padding: EdgeInsets.fromLTRB(8, 3, 8, 3),
       color: Colors.white,
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -166,7 +166,6 @@ class _HomePageState extends State<HomePage>
               mainAxisSize: MainAxisSize.min,
               children: [
                 Icon(Icons.add, color: Colors.white),
-                SizedBox(width: 3),
                 Text("Add task", style: TextStyle(color: Colors.white)),
               ],
             ),
@@ -178,7 +177,6 @@ class _HomePageState extends State<HomePage>
               mainAxisSize: MainAxisSize.min,
               children: [
                 Icon(Icons.manage_accounts, color: Colors.white),
-                SizedBox(width: 3),
                 Text("Quản lí tài nguyên",
                     style: TextStyle(color: Colors.white)),
               ],
@@ -190,49 +188,55 @@ class _HomePageState extends State<HomePage>
   }
 
   Widget _buildDateBoxes() {
-    return Container(
-      padding: EdgeInsets.fromLTRB(16, 3, 16, 2),
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        child: BlocBuilder<DateBloc, DateBlocState>(
-          builder: (context, state) {
-            if (state.daysList.isEmpty) {
-              return Center(child: CircularProgressIndicator());
-            }
-            return Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
+    return Padding(
+      padding: const EdgeInsets.all(8.0), // Padding 8
+      child: BlocBuilder<DateBloc, DateBlocState>(
+        builder: (context, state) {
+          if (state.daysList.isEmpty) {
+            return Center(child: CircularProgressIndicator());
+          }
+          final screenWidth = MediaQuery.of(context).size.width;
+          final itemWidth = (screenWidth - 32) / state.daysList.length;
+          return GestureDetector(
+            onHorizontalDragEnd: (details) {
+              if (details.primaryVelocity! < 0) {
+                _changeWeek(1);
+              } else if (details.primaryVelocity! > 0) {
+                _changeWeek(-1);
+              }
+            },
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: state.daysList.map((day) {
                 final isToday = day['date'] ==
                     DateFormat('dd/MM/yyyy').format(DateTime.now());
                 final isSelected = day['dayOfWeek'] == _selectedDayOfWeek;
                 return GestureDetector(
                   onTap: () => _selectDateBox(day['dayOfWeek']!),
-                  child: Padding(
-                    padding: const EdgeInsets.all(3.0),
-                    child: Container(
-                      padding: EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: isSelected
-                            ? Colors.blue
-                            : (isToday ? Colors.yellow : Colors.white),
-                        border: Border.all(color: Colors.grey),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(day['dayOfWeek']!,
-                              style: TextStyle(fontWeight: FontWeight.bold)),
-                          Text(day['dayMonth']!),
-                        ],
-                      ),
+                  child: Container(
+                    width: itemWidth, // Thiết lập chiều rộng của mỗi item
+                    padding: EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: isSelected
+                          ? Colors.blue
+                          : (isToday ? Colors.yellow : Colors.white),
+                      border: Border.all(color: Colors.grey),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(day['dayOfWeek']!,
+                            style: TextStyle(fontWeight: FontWeight.bold)),
+                        Text(day['dayMonth']!),
+                      ],
                     ),
                   ),
                 );
               }).toList(),
-            );
-          },
-        ),
+            ),
+          );
+        },
       ),
     );
   }

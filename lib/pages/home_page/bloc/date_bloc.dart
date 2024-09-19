@@ -29,13 +29,13 @@ class DateBloc extends Bloc<DateBlocEvent, DateBlocState> {
 
     // Bản đồ rút gọn tên thứ
     final Map<String, String> shortDayMap = {
-      'Thứ Hai': 'Thứ 2',
-      'Thứ Ba': 'Thứ 3',
-      'Thứ Tư': 'Thứ 4',
-      'Thứ Năm': 'Thứ 5',
-      'Thứ Sáu': 'Thứ 6',
-      'Thứ Bảy': 'Thứ 7',
-      'Chủ Nhật': 'Chủ Nhật',
+      'Thứ Hai': 'T2',
+      'Thứ Ba': 'T3',
+      'Thứ Tư': 'T4',
+      'Thứ Năm': 'T5',
+      'Thứ Sáu': 'T6',
+      'Thứ Bảy': 'T7',
+      'Chủ Nhật': 'CN',
     };
 
     for (int i = 0; i < 7; i++) {
