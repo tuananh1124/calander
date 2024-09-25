@@ -45,7 +45,7 @@ class _TabContentState extends State<TabContent>
         "location":
             "456 Nguyễn Thị Minh Khai, Quận 3, 456 Nguyễn Thị Minh Khai, Quận 3",
         "resources": "Trà",
-        "error": 2,
+        "error": 1,
       },
       {
         "NameCreate": "Nguyễn Văn B",
@@ -71,7 +71,7 @@ class _TabContentState extends State<TabContent>
         "member": "Nhân viên kỹ thuật",
         "location": "456 Nguyễn Thị Minh Khai, Quận 3",
         "resources": "Trà",
-        "error": 2,
+        "error": 0,
       },
       {
         "NameCreate": "Nguyễn Văn A",
@@ -86,7 +86,7 @@ class _TabContentState extends State<TabContent>
         "location":
             "456 Nguyễn Thị Minh Khai, Quận 3, 456 Nguyễn Thị Minh Khai, Quận 3",
         "resources": "Trà",
-        "error": 2,
+        "error": 1,
       },
       // Thêm dữ liệu khác ở đây
     ];

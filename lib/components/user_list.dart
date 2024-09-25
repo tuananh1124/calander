@@ -125,42 +125,19 @@ class _MyListState extends State<MyList> with SingleTickerProviderStateMixin {
         onTap: () {
           FocusScope.of(context).unfocus();
         },
-        child: DefaultTabController(
-          length: 2,
-          child: Column(
-            children: [
-              _buildTabBar(),
-              Expanded(
-                child: TabBarView(
-                  controller: _tabController,
-                  children: [
-                    SingleChildScrollView(
-                      child: Column(
-                        children: [
-                          _buildSearchBar(
-                              _searchDepartmentController, 'Tìm kiếm đơn vị'),
-                          _buildDepartmentList(),
-                        ],
-                      ),
-                    ),
-                    // Employee Tab
-                    SingleChildScrollView(
-                      child: Column(
-                        children: [
-                          _buildSearchBar(
-                              _searchEmployeeController, 'Tìm kiếm nhân viên'),
-                          SizedBox(
-                            height: MediaQuery.of(context).size.height - 150,
-                            child: _buildEmployeeList(),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
+        child: Column(
+          children: [
+            _buildTabBar(),
+            Expanded(
+              child: TabBarView(
+                controller: _tabController,
+                children: [
+                  _buildDepartmentTab(),
+                  _buildEmployeeTab(),
+                ],
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
@@ -192,6 +169,28 @@ class _MyListState extends State<MyList> with SingleTickerProviderStateMixin {
     );
   }
 
+  Widget _buildDepartmentTab() {
+    return Column(
+      children: [
+        _buildSearchBar(_searchDepartmentController, 'Tìm kiếm đơn vị'),
+        Expanded(
+          child: _buildDepartmentList(),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildEmployeeTab() {
+    return Column(
+      children: [
+        _buildSearchBar(_searchEmployeeController, 'Tìm kiếm nhân viên'),
+        Expanded(
+          child: _buildEmployeeList(),
+        ),
+      ],
+    );
+  }
+
   Widget _buildSearchBar(TextEditingController controller, String hintText) {
     return Padding(
       padding: const EdgeInsets.all(8.0),
@@ -210,8 +209,6 @@ class _MyListState extends State<MyList> with SingleTickerProviderStateMixin {
 
   Widget _buildDepartmentList() {
     return ListView.builder(
-      shrinkWrap: true,
-      physics: NeverScrollableScrollPhysics(),
       itemCount: _filteredDepartmentData.length,
       itemBuilder: (context, index) {
         final department = _filteredDepartmentData[index];
@@ -237,8 +234,7 @@ class _MyListState extends State<MyList> with SingleTickerProviderStateMixin {
             } else if (subgroup is String) {
               subgroupName = subgroup;
             } else {
-              return SizedBox
-                  .shrink(); // Nếu không xác định được, trả về widget rỗng
+              return SizedBox.shrink();
             }
 
             final subgroupEmployeeCount =
@@ -274,7 +270,7 @@ class _MyListState extends State<MyList> with SingleTickerProviderStateMixin {
       itemCount: _filteredDataList.length,
       itemBuilder: (context, index) {
         if (index >= _filteredDataList.length) {
-          return SizedBox.shrink(); // Hoặc có thể hiển thị một widget trống
+          return SizedBox.shrink();
         }
 
         final data = _filteredDataList[index];

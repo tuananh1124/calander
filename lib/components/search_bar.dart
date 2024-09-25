@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_calendar/pages/month_boxes/calanderToMonth.dart';
+import 'package:table_calendar/table_calendar.dart';
 
 class SearchBarWithDropdown extends StatefulWidget {
   @override
@@ -7,7 +9,7 @@ class SearchBarWithDropdown extends StatefulWidget {
 
 class _SearchBarWithDropdownState extends State<SearchBarWithDropdown> {
   String _selectedFilter = 'Theo tuần';
-  String? _selectedUnit; // Chỉ một phòng ban được chọn
+  String? _selectedUnit;
   String _searchQuery = '';
   bool _isSearching = false;
 
@@ -33,7 +35,6 @@ class _SearchBarWithDropdownState extends State<SearchBarWithDropdown> {
     {'department': 'Vụ Tài chính'},
     {'department': 'Phòng Xây dựng'},
     {'department': 'Phòng Kiểm toán'},
-    // ... thêm các phòng ban khác nếu cần
   ];
 
   List<String> getFilteredDropdownItems() {
@@ -63,13 +64,7 @@ class _SearchBarWithDropdownState extends State<SearchBarWithDropdown> {
               child: IntrinsicHeight(
                 child: Row(
                   children: [
-                    Expanded(
-                      child: buildSearchBar(),
-                    ),
-                    SizedBox(width: 3), // Adjust spacing between the widgets
-                    Expanded(
-                      child: buildDropdownButtonFormField(),
-                    ),
+                    Expanded(child: buildSearchBar()),
                   ],
                 ),
               ),
@@ -82,15 +77,10 @@ class _SearchBarWithDropdownState extends State<SearchBarWithDropdown> {
 
   Widget buildSearchBar() {
     return GestureDetector(
-      onTap: () {
-        _showUnitDropdown();
-      },
+      onTap: _showUnitDropdown,
       child: Container(
         padding: EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: Colors.grey),
-        ),
+        decoration: buildBoxDecoration(),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
@@ -98,9 +88,8 @@ class _SearchBarWithDropdownState extends State<SearchBarWithDropdown> {
               child: Text(
                 _selectedUnit ?? 'Tìm kiếm phòng ban',
                 style: TextStyle(color: Colors.black),
-                maxLines: 1, // Ensure text appears on a single line
-                overflow:
-                    TextOverflow.ellipsis, // Add ellipsis if text overflows
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
             ),
             Icon(Icons.search),
@@ -110,36 +99,10 @@ class _SearchBarWithDropdownState extends State<SearchBarWithDropdown> {
     );
   }
 
-  Widget buildDropdownButtonFormField() {
-    return DropdownButtonFormField<String>(
-      value: _selectedFilter,
-      decoration: InputDecoration(
-        contentPadding: EdgeInsets.all(12),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: BorderSide(color: Colors.black), // Border màu đen
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide:
-              BorderSide(color: Colors.black), // Border màu đen khi focus
-        ),
-      ),
-      items: [
-        DropdownMenuItem(
-          value: 'Theo tuần',
-          child: Text('Theo tuần'),
-        ),
-        DropdownMenuItem(
-          value: 'Theo tháng',
-          child: Text('Theo tháng'),
-        ),
-      ],
-      onChanged: (value) {
-        setState(() {
-          _selectedFilter = value ?? 'Theo tuần'; // Cập nhật giá trị bộ lọc
-        });
-      },
+  BoxDecoration buildBoxDecoration() {
+    return BoxDecoration(
+      borderRadius: BorderRadius.circular(10),
+      border: Border.all(color: Colors.grey),
     );
   }
 
@@ -157,51 +120,56 @@ class _SearchBarWithDropdownState extends State<SearchBarWithDropdown> {
               height: MediaQuery.of(context).size.height * 0.7,
               child: Column(
                 children: [
-                  TextField(
-                    onChanged: (value) {
-                      setModalState(() {
-                        _searchQuery = value;
-                      });
-                    },
-                    decoration: InputDecoration(
-                      labelText: 'Tìm kiếm phòng ban',
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      suffixIcon: Icon(Icons.search),
-                    ),
-                  ),
+                  buildSearchField(setModalState),
                   SizedBox(height: 16),
-                  Expanded(
-                    child: ListView(
-                      children: getFilteredDropdownItems().map((unit) {
-                        return ListTile(
-                          title: Text(
-                            unit,
-                            maxLines: 1, // Ensure text appears on a single line
-                            overflow: TextOverflow
-                                .ellipsis, // Add ellipsis if text overflows
-                          ),
-                          trailing: _selectedUnit == unit
-                              ? Icon(Icons.check, color: Colors.green)
-                              : null,
-                          onTap: () {
-                            setState(() {
-                              _selectedUnit = unit;
-                              _isSearching = false;
-                            });
-                            Navigator.pop(context);
-                          },
-                        );
-                      }).toList(),
-                    ),
-                  ),
+                  Expanded(child: buildUnitList()),
                 ],
               ),
             );
           },
         );
       },
+    );
+  }
+
+  Widget buildSearchField(StateSetter setModalState) {
+    return TextField(
+      onChanged: (value) {
+        setModalState(() {
+          _searchQuery = value;
+        });
+      },
+      decoration: InputDecoration(
+        labelText: 'Tìm kiếm phòng ban',
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+        ),
+        suffixIcon: Icon(Icons.search),
+      ),
+    );
+  }
+
+  Widget buildUnitList() {
+    return ListView(
+      children: getFilteredDropdownItems().map((unit) {
+        return ListTile(
+          title: Text(
+            unit,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+          trailing: _selectedUnit == unit
+              ? Icon(Icons.check, color: Colors.green)
+              : null,
+          onTap: () {
+            setState(() {
+              _selectedUnit = unit;
+              _isSearching = false;
+            });
+            Navigator.pop(context);
+          },
+        );
+      }).toList(),
     );
   }
 }

@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_calendar/components/TabCard_list.dart';
-import 'package:flutter_calendar/components/animation_page.dart';
+import 'package:flutter_calendar/pages/month_boxes/bloc/month_bloc.dart';
+import 'package:flutter_calendar/pages/month_boxes/calanderToMonth.dart';
 import 'package:flutter_calendar/pages/add_task_page.dart';
 import 'package:flutter_calendar/pages/home_page/bloc/date_bloc.dart';
 import 'package:flutter_calendar/pages/menu_drawer.dart';
@@ -19,16 +20,21 @@ class _HomePageState extends State<HomePage>
   late TabController _tabController;
   String _selectedDayOfWeek =
       DateFormat('EEEE').format(DateTime.now()); // Lưu trữ thứ trong tuần
+  String _selectedMonth =
+      DateFormat('MMMM').format(DateTime.now()); // Lưu trữ tên tháng hiện tại
+
   DateTime _currentDate = DateTime.now();
   bool _hasChangedWeek = false;
   late DateBloc _dateBloc;
   String _selectedFilter = 'Theo tuần'; // Giá trị mặc định
+
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
     _dateBloc = DateBloc();
     _dateBloc.add(LoadData(_currentDate));
+    context.read<MonthBloc>().add(LoadDataToMonth(DateTime.now()));
   }
 
   @override
@@ -78,19 +84,94 @@ class _HomePageState extends State<HomePage>
     return Column(
       children: [
         _buildDateDropdown(),
-        SearchBarWithDropdown(),
+        Row(
+          children: [
+            Expanded(child: SearchBarWithDropdown()),
+            Expanded(child: buildDropdownButtonFormField()),
+          ],
+        ),
         _buildAddTaskButtons(),
-        if (_selectedFilter == 'Theo tuần') ...[
-          _buildDateBoxes(),
-          _buildTabBar(),
+        if (_selectedFilter == 'Theo tháng')
+          _buildMonthBoxes() // Show month boxes when "Theo tháng" is selected
+        else
+          _buildDateBoxes(), // Show date boxes when "Theo tuần" is selected
+        if (_selectedFilter == 'Theo tháng')
+          Expanded(
+              child:
+                  _buildMonthCalendar()) // Show month calendar when "Theo tháng" is selected
+        else ...[
+          _buildTabBar(), // Show tab bar when "Theo tuần" is selected
           Expanded(child: _buildTabBarView()),
-        ] else if (_selectedFilter == 'Theo tháng') ...[
-          // Đặt các widget dành cho chế độ "Theo tháng" tại đây
-          // Ví dụ: Có thể chỉ hiển thị một widget duy nhất hoặc khác biệt
-          Center(child: Text('Chế độ Theo tháng đang được triển khai')),
-          // Thay đổi `_buildTabBarView` nếu cần
         ],
       ],
+    );
+  }
+
+  Widget buildDropdownButtonFormField() {
+    return DropdownButtonFormField<String>(
+      value: _selectedFilter,
+      decoration: buildInputDecoration(),
+      items: ['Theo tuần', 'Theo tháng']
+          .map((filter) => DropdownMenuItem(value: filter, child: Text(filter)))
+          .toList(),
+      onChanged: (value) {
+        setState(() {
+          _selectedFilter = value ?? 'Theo tuần';
+        });
+      },
+    );
+  }
+
+  InputDecoration buildInputDecoration() {
+    return InputDecoration(
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(10),
+        borderSide: BorderSide(color: Colors.black),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(10),
+        borderSide: BorderSide(color: Colors.black),
+      ),
+    );
+  }
+
+  Widget _buildMonthCalendar() {
+    return Container(
+      color: Colors.white,
+      child: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            CalendarWidget(), // Hiển thị lịch tháng
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDateDrop() {
+    return Container(
+      color: Colors.white,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          DropdownButton<String>(
+            value: _selectedFilter,
+            onChanged: (String? newValue) {
+              setState(() {
+                _selectedFilter = newValue!;
+              });
+            },
+            items: <String>['Theo tuần', 'Theo tháng']
+                .map<DropdownMenuItem<String>>((String value) {
+              return DropdownMenuItem<String>(
+                value: value,
+                child: Text(value),
+              );
+            }).toList(),
+          ),
+        ],
+      ),
     );
   }
 
@@ -137,7 +218,7 @@ class _HomePageState extends State<HomePage>
     if (picked != null) {
       setState(() {
         _currentDate = picked;
-        _selectedDayOfWeek = DateFormat('EEEE').format(picked);
+        _updateSelectedMonthAndDayOfWeek(picked);
         context.read<DateBloc>().add(LoadData(picked));
       });
     }
@@ -146,6 +227,7 @@ class _HomePageState extends State<HomePage>
   void _changeWeek(int increment) {
     setState(() {
       _currentDate = _currentDate.add(Duration(days: increment * 7));
+      _updateSelectedMonthAndDayOfWeek(_currentDate);
       _dateBloc.add(LoadData(_currentDate));
       _hasChangedWeek = true;
     });
@@ -154,9 +236,15 @@ class _HomePageState extends State<HomePage>
   void _goToCurrentWeek() {
     setState(() {
       _currentDate = DateTime.now();
+      _updateSelectedMonthAndDayOfWeek(_currentDate);
       _dateBloc.add(LoadData(_currentDate));
       _hasChangedWeek = false;
     });
+  }
+
+  void _updateSelectedMonthAndDayOfWeek(DateTime date) {
+    _selectedDayOfWeek = DateFormat('EEEE').format(date);
+    _selectedMonth = DateFormat('MMMM').format(date);
   }
 
   Widget _buildAddTaskButtons() {
@@ -248,6 +336,94 @@ class _HomePageState extends State<HomePage>
     );
   }
 
+  Widget _buildMonthBoxes() {
+    return Padding(
+      padding: const EdgeInsets.all(8.0),
+      child: BlocBuilder<MonthBloc, MonthBlocState>(
+        builder: (context, state) {
+          if (state.monthsList.isEmpty) {
+            return Center(child: CircularProgressIndicator());
+          }
+
+          // Xác định tháng hiện tại
+          final currentMonthIndex = state.monthsList
+              .indexWhere((month) => month['monthOfYear'] == _selectedMonth);
+          final startIndex = currentMonthIndex > 2
+              ? currentMonthIndex - 2
+              : 0; // Giới hạn không cho chỉ số âm
+          final endIndex = currentMonthIndex + 3 < state.monthsList.length
+              ? currentMonthIndex + 3
+              : state.monthsList
+                  .length; // Giới hạn không vượt quá chiều dài danh sách
+
+          final visibleMonths = state.monthsList.sublist(startIndex, endIndex);
+          final currentMonth = DateFormat('MMMM').format(DateTime.now());
+
+          final screenWidth = MediaQuery.of(context).size.width;
+          final itemWidth = (screenWidth - 32) / visibleMonths.length;
+
+          return GestureDetector(
+            onHorizontalDragEnd: (details) {
+              if (details.velocity.pixelsPerSecond.dx > 0) {
+                // Vuốt sang trái
+                if (currentMonthIndex > 0) {
+                  setState(() {
+                    _selectedMonth =
+                        state.monthsList[currentMonthIndex - 1]['monthOfYear']!;
+                  });
+                }
+              } else if (details.velocity.pixelsPerSecond.dx < 0) {
+                // Vuốt sang phải
+                if (currentMonthIndex < state.monthsList.length - 1) {
+                  setState(() {
+                    _selectedMonth =
+                        state.monthsList[currentMonthIndex + 1]['monthOfYear']!;
+                  });
+                }
+              }
+            },
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: visibleMonths.map((month) {
+                final isSelected = month['monthOfYear'] == _selectedMonth;
+                final isCurrentMonth = month['monthOfYear'] == currentMonth;
+                return GestureDetector(
+                  onTap: () => _selectMonthBox(month['monthOfYear']!),
+                  child: Container(
+                    width: itemWidth,
+                    padding: EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: isSelected ? Colors.blue : Colors.white,
+                      border: Border.all(color: Colors.grey),
+                      borderRadius: BorderRadius.circular(8),
+                      boxShadow: isCurrentMonth
+                          ? [BoxShadow(color: Colors.yellow, blurRadius: 10)]
+                          : [], // Thêm hiệu ứng bóng cho tháng hiện tại
+                    ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          month['monthOfYear']!,
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: isSelected
+                                ? 20
+                                : 16, // Tăng kích thước chữ khi được chọn
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              }).toList(),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
   Widget _buildTabBar() {
     return TabBar(
       controller: _tabController,
@@ -271,26 +447,29 @@ class _HomePageState extends State<HomePage>
     );
   }
 
+  void _navigateToAddTaskPage(BuildContext context) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => AddTaskPage()),
+    );
+  }
+
+  void _navigateToResourceManagementPage(BuildContext context) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => ResourceManagementPage()),
+    );
+  }
+
   void _selectDateBox(String dayOfWeek) {
     setState(() {
       _selectedDayOfWeek = dayOfWeek;
     });
   }
 
-  void _showAddTaskModal(BuildContext context) {
-    _navigateToAddTaskPage(context);
-  }
-
-  void _navigateToAddTaskPage(BuildContext context) {
-    Navigator.of(context).push(SlideFromRightPageRoute(page: AddTaskPage()));
-  }
-
-  void _showResourceManagementModal(BuildContext context) {
-    _navigateToResourceManagementPage(context);
-  }
-
-  void _navigateToResourceManagementPage(BuildContext context) {
-    Navigator.of(context)
-        .push(SlideFromRightPageRoute(page: ResourceManagementPage()));
+  void _selectMonthBox(String monthOfYear) {
+    setState(() {
+      _selectedMonth = monthOfYear;
+    });
   }
 }
