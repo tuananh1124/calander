@@ -1,6 +1,6 @@
 part of 'month_bloc.dart';
 
-sealed class MonthBlocEvent extends Equatable {
+abstract class MonthBlocEvent extends Equatable {
   const MonthBlocEvent();
 
   @override
@@ -14,4 +14,13 @@ class LoadDataToMonth extends MonthBlocEvent {
 
   @override
   List<Object> get props => [date];
+}
+
+class ChangeMonth extends MonthBlocEvent {
+  final int increment;
+
+  const ChangeMonth(this.increment);
+
+  @override
+  List<Object> get props => [increment];
 }

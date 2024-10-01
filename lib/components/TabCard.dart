@@ -14,6 +14,7 @@ class ExpandableCard extends StatelessWidget {
   final String location;
   final String resources;
   final int? error;
+  final String session;
   final VoidCallback onDelete;
 
   const ExpandableCard({
@@ -30,6 +31,7 @@ class ExpandableCard extends StatelessWidget {
     required this.resources,
     this.error,
     required this.onDelete,
+    required this.session,
   }) : super(key: key);
 
   @override

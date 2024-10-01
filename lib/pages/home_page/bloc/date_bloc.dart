@@ -13,7 +13,7 @@ class DateBloc extends Bloc<DateBlocEvent, DateBlocState> {
   }
 
   void _onLoadData(LoadData event, Emitter<DateBlocState> emit) async {
-    print("Đã vào BloC");
+    print("Đã vào BloC thứ");
     await initializeDateFormatting('vi_VN', null);
 
     // Ngày truyền vào

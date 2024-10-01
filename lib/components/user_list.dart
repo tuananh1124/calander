@@ -95,6 +95,7 @@ class _MyListState extends State<MyList> with SingleTickerProviderStateMixin {
     _searchEmployeeController.addListener(_filterEmployees);
     _searchDepartmentController.addListener(_filterDepartments);
     _initExpansionState(departmentData);
+    _initExpansionState(dataList);
   }
 
   @override
@@ -214,53 +215,22 @@ class _MyListState extends State<MyList> with SingleTickerProviderStateMixin {
         final department = _filteredDepartmentData[index];
         final departmentName = department['department'];
         final subgroups = department['subgroups'] as List<dynamic>?;
+
         final mainDepartmentEmployeeCount =
             dataList.where((data) => data['group'] == departmentName).length;
         final mainDepartmentEmployeeCountText = mainDepartmentEmployeeCount > 0
             ? ' ($mainDepartmentEmployeeCount)'
             : '';
-        final departmentTile = ListTile(
-          title: Text(
-            '$departmentName$mainDepartmentEmployeeCountText',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w400),
-          ),
-          onTap: () => _onGroupSelected(departmentName),
-        );
-        if (subgroups != null && subgroups.isNotEmpty) {
-          List<Widget> subgroupWidgets = subgroups.map<Widget>((subgroup) {
-            String subgroupName;
-            if (subgroup is Map) {
-              subgroupName = subgroup['name'];
-            } else if (subgroup is String) {
-              subgroupName = subgroup;
-            } else {
-              return SizedBox.shrink();
-            }
 
-            final subgroupEmployeeCount =
-                dataList.where((data) => data['group'] == subgroupName).length;
-            final subgroupEmployeeCountText =
-                subgroupEmployeeCount > 0 ? ' ($subgroupEmployeeCount)' : '';
-
-            return ListTile(
-              title: Text(
-                '$subgroupName$subgroupEmployeeCountText',
-                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w300),
-              ),
-              onTap: () => _onGroupSelected(subgroupName),
-            );
-          }).toList();
-
-          return ExpansionTile(
-            title: Text(
-              '$departmentName$mainDepartmentEmployeeCountText',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w400),
-            ),
-            children: subgroupWidgets,
-          );
-        } else {
-          return departmentTile;
-        }
+        return subgroups != null && subgroups.isNotEmpty
+            ? _buildExpandableSubgroup(departmentName, subgroups)
+            : ListTile(
+                title: Text(
+                  '$departmentName$mainDepartmentEmployeeCountText',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w400),
+                ),
+                onTap: () => _onGroupSelected(departmentName),
+              );
       },
     );
   }
@@ -360,27 +330,28 @@ class _MyListState extends State<MyList> with SingleTickerProviderStateMixin {
           _expansionState[departmentName] = isExpanded;
         });
       },
-      children: subgroups.map((subgroup) {
-        if (subgroup is String) {
-          return ListTile(
-            title: Text(subgroup,
-                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w300)),
-            onTap: () => _onGroupSelected(subgroup),
-          );
-        } else if (subgroup is Map<String, dynamic>) {
-          final subgroupName = subgroup['name'] ?? '';
-          final nestedSubgroups = subgroup['subgroups'] as List<dynamic>?;
-
-          return nestedSubgroups != null && nestedSubgroups.isNotEmpty
-              ? _buildExpandableSubgroup(subgroupName, nestedSubgroups)
-              : ListTile(
-                  title: Text(subgroupName,
-                      style:
-                          TextStyle(fontSize: 14, fontWeight: FontWeight.w300)),
-                  onTap: () => _onGroupSelected(subgroupName),
-                );
+      children: subgroups.map<Widget>((subgroup) {
+        String subgroupName;
+        if (subgroup is Map) {
+          subgroupName = subgroup['name'] ?? '';
+        } else if (subgroup is String) {
+          subgroupName = subgroup;
+        } else {
+          return SizedBox.shrink();
         }
-        return Container();
+
+        final subgroupEmployeeCount =
+            dataList.where((data) => data['group'] == subgroupName).length;
+        final subgroupEmployeeCountText =
+            subgroupEmployeeCount > 0 ? ' ($subgroupEmployeeCount)' : '';
+
+        return ListTile(
+          title: Text(
+            '$subgroupName$subgroupEmployeeCountText',
+            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w300),
+          ),
+          onTap: () => _onGroupSelected(subgroupName),
+        );
       }).toList(),
     );
   }
