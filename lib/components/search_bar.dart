@@ -79,7 +79,7 @@ class _SearchBarWithDropdownState extends State<SearchBarWithDropdown> {
     return GestureDetector(
       onTap: _showUnitDropdown,
       child: Container(
-        padding: EdgeInsets.all(16),
+        padding: EdgeInsets.all(8),
         decoration: buildBoxDecoration(),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,

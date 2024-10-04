@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_calendar/components/location/location_item.dart';
 import 'package:flutter_calendar/components/resource/resource_item.dart';
-import 'package:flutter_calendar/components/user_item.dart';
+import 'package:flutter_calendar/components/list_user/user_item.dart';
 
 //TabContentPersion
 class TabContentPerson extends StatefulWidget {

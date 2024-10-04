@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_calendar/components/TabCard.dart';
+import 'package:flutter_calendar/components/list_card/TabCard.dart';
+import 'package:flutter_calendar/models/login_model.dart';
+import 'package:flutter_calendar/network/api_service.dart';
 import 'package:intl/intl.dart';
 
 class TabContent extends StatefulWidget {
@@ -24,11 +26,18 @@ class _TabContentState extends State<TabContent>
   bool _isLoading = true;
   int morningCount = 0;
   int afternoonCount = 0;
+  final ApiProvider _apiProvider = ApiProvider();
 
   @override
   void initState() {
     super.initState();
     _fetchAndFilterData(widget.selectedDate);
+    getListOfPersonal();
+  }
+
+  Future<List<Map<String, dynamic>>> getListOfPersonal() async {
+    await _apiProvider.getListOfPersonal(User.token.toString());
+    return [];
   }
 
   @override
@@ -40,8 +49,19 @@ class _TabContentState extends State<TabContent>
   }
 
   void _removeItem(int index) {
+    final session = _data[index]['session'];
     setState(() {
       _data.removeAt(index);
+
+      // Cập nhật lại số lượng sáng/chiều
+      if (session == 'sáng') {
+        morningCount--;
+      } else if (session == 'chiều') {
+        afternoonCount--;
+      }
+
+      // Gọi phương thức updateCounts để cập nhật số lượng trên HomePage
+      widget.updateCounts(morningCount, afternoonCount);
     });
   }
 
@@ -50,7 +70,7 @@ class _TabContentState extends State<TabContent>
     return [
       {
         "NameCreate": "Nguyễn Văn A",
-        "date": "01/10/2024",
+        "date": "04/10/2024",
         "time": "8:00 - 9:00",
         "content": "Họp để thảo luận về dự án mới.",
         "note": "Thảo luận về dự án mới.",
@@ -64,7 +84,7 @@ class _TabContentState extends State<TabContent>
       },
       {
         "NameCreate": "Nguyễn Văn A",
-        "date": "01/10/2024",
+        "date": "04/10/2024",
         "time": "9:30 - 11:00",
         "content": "Họp để thảo luận về dự án mới.",
         "note": "Thảo luận về dự án mới.",
@@ -78,7 +98,7 @@ class _TabContentState extends State<TabContent>
       },
       {
         "NameCreate": "Nguyễn Văn B",
-        "date": "02/10/2024",
+        "date": "05/10/2024",
         "time": "9:00 - 11:00",
         "content": "Họp để thảo luận về dự án mới.",
         "note": "Thảo luận về dự án mới.",

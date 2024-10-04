@@ -1,9 +1,7 @@
 import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_calendar/components/animation_page.dart';
-import 'package:flutter_calendar/components/location/location_list.dart';
 import 'package:flutter_calendar/components/resource/resource_list.dart';
-import 'package:flutter_calendar/components/user_list.dart';
 
 class ResourceItem extends StatefulWidget {
   final String resource;

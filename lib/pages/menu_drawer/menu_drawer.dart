@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_calendar/models/login_model.dart';
+import 'package:flutter_calendar/pages/login/logintab.dart';
 
 class CustomDrawer extends StatelessWidget {
   @override
@@ -25,7 +27,7 @@ class CustomDrawer extends StatelessWidget {
                     ),
                     SizedBox(width: 5),
                     Text(
-                      'NguyenTuanAnh',
+                      '${User.fullName ?? 'Chưa đăng nhập'}',
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: 24,
@@ -43,9 +45,19 @@ class CustomDrawer extends StatelessWidget {
             },
           ),
           ListTile(
-            title: Text('Đăng xuất'),
+            title: Text(User.fullName == null ? 'Đăng nhập' : 'Đăng xuất'),
             onTap: () {
-              Navigator.pop(context);
+              if (User.fullName == null) {
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (context) => LoginPage()),
+                );
+              } else {
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (context) => LoginPage()),
+                );
+              }
             },
           ),
         ],

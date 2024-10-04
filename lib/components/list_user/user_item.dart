@@ -1,8 +1,7 @@
 import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_calendar/components/animation_page.dart';
-import 'package:flutter_calendar/components/user_list.dart';
-import 'package:flutter_easyloading/flutter_easyloading.dart';
+import 'package:flutter_calendar/components/list_user/user_list.dart';
 
 class UserListCard extends StatefulWidget {
   final String title;

@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_calendar/components/TabCard_list.dart';
+import 'package:flutter_calendar/components/list_card/TabCard_list.dart';
 import 'package:flutter_calendar/pages/month_boxes/bloc/month_bloc.dart';
 import 'package:flutter_calendar/pages/month_boxes/calanderToMonth.dart';
-import 'package:flutter_calendar/pages/add_task_page.dart';
+import 'package:flutter_calendar/pages/add_task_page/add_task_page.dart';
 import 'package:flutter_calendar/pages/home_page/bloc/date_bloc.dart';
-import 'package:flutter_calendar/pages/menu_drawer.dart';
-import 'package:flutter_calendar/pages/resource_mana_page.dart';
+import 'package:flutter_calendar/pages/menu_drawer/menu_drawer.dart';
+import 'package:flutter_calendar/pages/content_resourc_page/resource_mana_page.dart';
 import 'package:flutter_calendar/components/search_bar.dart';
 import 'package:intl/intl.dart';
 
@@ -214,7 +214,7 @@ class _HomePageState extends State<HomePage>
 
   Widget _buildDateDropdown() {
     return Container(
-      padding: EdgeInsets.all(16),
+      padding: EdgeInsets.all(8),
       color: Colors.white,
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -235,7 +235,7 @@ class _HomePageState extends State<HomePage>
             child: Text(
               _selectedFilter == 'Theo tuần'
                   ? DateFormat('dd/MM/yyyy').format(_currentDate)
-                  : DateFormat('MMMM', 'vi_VN').format(_currentDate),
+                  : 'Tháng ${DateFormat('MM/yyyy', 'vi_VN').format(_currentDate)}',
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
           ),

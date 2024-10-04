@@ -1,222 +1,73 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
-import 'package:file_picker/file_picker.dart'; // Import file_picker package
+import 'package:flutter_calendar/pages/add_task_page/tabcontent_addtask_page.dart';
+import 'package:flutter_calendar/pages/content_persion_page/content_persion_page.dart';
 
-//TabContentAddTask
-class TabContentAddTask extends StatefulWidget {
-  @override
-  _TabContentAddTaskState createState() => _TabContentAddTaskState();
-}
-
-class _TabContentAddTaskState extends State<TabContentAddTask>
-    with AutomaticKeepAliveClientMixin {
-  TextEditingController _dateController = TextEditingController();
-  TextEditingController _timeController = TextEditingController();
-  TextEditingController _contentController = TextEditingController();
-  TextEditingController _noteController = TextEditingController();
-  String _selectedPeriod = 'Chiều';
-  String _selectedColor = 'green';
-  String? _selectedFile; // Biến lưu tên tệp đã chọn
-
-  @override
-  bool get wantKeepAlive => true;
-
-  Future<void> _pickFile() async {
-    FilePickerResult? result = await FilePicker.platform.pickFiles();
-
-    if (result != null) {
-      PlatformFile file = result.files.first;
-
-      setState(() {
-        _selectedFile = file.name; // Lưu tên tệp đã chọn
-      });
-
-      print('File selected: ${file.name}');
-    } else {
-      // User canceled the picker
-    }
-  }
-
+class AddTaskPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    super.build(context);
-    return SingleChildScrollView(
-      child: GestureDetector(
+    return Scaffold(
+      appBar: AppBar(
+        leading: IconButton(
+          icon: Icon(
+            Icons.arrow_back_ios_new_outlined,
+            color: Colors.white,
+            size: 16,
+          ),
+          onPressed: () {
+            Navigator.of(context).pop();
+          },
+        ),
+        title: Text(
+          'Thêm lịch',
+          style: TextStyle(color: Colors.white),
+        ),
+        backgroundColor: Colors.blue,
+        foregroundColor: Colors.white,
+      ),
+      body: GestureDetector(
         onTap: () {
-          FocusScope.of(context)
-              .unfocus(); // Tắt bàn phím khi bấm vào khoảng trắng
+          // Dismiss keyboard when tapping outside of text fields
+          FocusScope.of(context).unfocus();
         },
-        child: Padding(
-          padding: const EdgeInsets.all(10.0),
+        child: DefaultTabController(
+          length: 2,
           child: Column(
             children: [
-              SizedBox(height: 10),
-              TextFormField(
-                controller: _dateController,
-                readOnly: true, // Ngăn bàn phím xuất hiện
-                decoration: InputDecoration(
-                  labelText: 'Ngày',
-                  prefixIcon: Icon(Icons.calendar_today),
-                  border: OutlineInputBorder(),
-                ),
-                onTap: () async {
-                  DateTime? pickedDate = await showDatePicker(
-                    context: context,
-                    initialDate: DateTime.now(),
-                    firstDate: DateTime(2000),
-                    lastDate: DateTime(2100),
-                  );
-                  if (pickedDate != null) {
-                    setState(() {
-                      _dateController.text =
-                          DateFormat('dd/MM/yyyy').format(pickedDate);
-                    });
-                  }
-                },
-              ),
-              SizedBox(height: 10),
-              SizedBox(
-                width: double.infinity,
-                child: DropdownButtonFormField<String>(
-                  value: _selectedPeriod,
-                  decoration: InputDecoration(
-                    labelText: 'Buổi',
-                    border: OutlineInputBorder(),
-                  ),
-                  onChanged: (newValue) {
-                    setState(() {
-                      _selectedPeriod = newValue!;
-                    });
-                  },
-                  items: ['Sáng', 'Chiều']
-                      .map((period) => DropdownMenuItem(
-                            child: Text(period),
-                            value: period,
-                          ))
-                      .toList(),
-                ),
-              ),
-              SizedBox(height: 10),
-              TextFormField(
-                controller: _timeController,
-                readOnly: true, // Ngăn bàn phím xuất hiện
-                decoration: InputDecoration(
-                  labelText: 'Giờ',
-                  prefixIcon: Icon(Icons.access_time),
-                  border: OutlineInputBorder(),
-                ),
-                onTap: () async {
-                  TimeOfDay? pickedTime = await showTimePicker(
-                    context: context,
-                    initialTime: TimeOfDay.now(),
-                  );
-                  if (pickedTime != null) {
-                    setState(() {
-                      _timeController.text = pickedTime.format(context);
-                    });
-                  }
-                },
-              ),
-              SizedBox(height: 10),
-              TextField(
-                controller: _contentController,
-                maxLines: 3,
-                decoration: InputDecoration(
-                  labelText: 'Nội dung',
-                  border: OutlineInputBorder(),
-                ),
-              ),
-              SizedBox(height: 10),
-              TextField(
-                controller: _noteController,
-                decoration: InputDecoration(
-                  labelText: 'Ghi chú',
-                  border: OutlineInputBorder(),
-                ),
-              ),
-              SizedBox(height: 10),
-              Row(
-                children: [
-                  Text('Màu sắc:'),
-                  SizedBox(width: 10),
-                  ...['green', 'red', 'blue', 'purple', 'brown']
-                      .map(
-                        (color) => GestureDetector(
-                          onTap: () {
-                            setState(() {
-                              _selectedColor = color;
-                            });
-                          },
-                          child: Container(
-                            width: 20,
-                            height: 20,
-                            margin: EdgeInsets.symmetric(horizontal: 5),
-                            decoration: BoxDecoration(
-                              color: Colors.primaries[[
-                                'green',
-                                'red',
-                                'blue',
-                                'purple',
-                                'brown'
-                              ].indexOf(color)],
-                              border: _selectedColor == color
-                                  ? Border.all(color: Colors.black, width: 2)
-                                  : null,
-                              shape: BoxShape.circle,
-                            ),
-                          ),
-                        ),
-                      )
-                      .toList(),
-                ],
-              ),
-              SizedBox(height: 10),
-              Row(
-                children: [
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: _pickFile, // Chọn tệp khi nhấn vào nút
-                      child: Text(
-                        'Chọn tệp',
-                        style: TextStyle(color: Colors.black),
-                      ),
+              Container(
+                height: 50,
+                color: Colors.blue, // Đặt màu nền cho TabBar
+                child: const TabBar(
+                  indicatorColor: Colors.white,
+                  indicator: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.only(
+                      topLeft: Radius.circular(10),
+                      topRight: Radius.circular(10),
                     ),
                   ),
-                  SizedBox(width: 10),
-                  Expanded(
-                    child: Text(
-                      _selectedFile != null
-                          ? 'Đã chọn: $_selectedFile'
-                          : 'Chưa chọn tệp',
-                      style: TextStyle(fontSize: 14),
+                  indicatorSize: TabBarIndicatorSize.tab,
+                  labelColor: Colors.blue,
+                  unselectedLabelColor: Colors.white,
+                  labelPadding: EdgeInsets.symmetric(vertical: 10),
+                  unselectedLabelStyle: TextStyle(color: Colors.white),
+                  dividerHeight: 0,
+                  tabs: [
+                    Tab(
+                      text: 'Thông tin lịch',
                     ),
-                  ),
-                ],
+                    Tab(
+                      text: 'Chủ trì cuộc họp',
+                    ),
+                  ],
+                ),
               ),
-              SizedBox(height: 10),
-              Row(
-                children: [
-                  Expanded(
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.blue,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10.0),
-                        ),
-                      ),
-                      onPressed: () {
-                        // Handle submit
-                      },
-                      child: Padding(
-                        padding: const EdgeInsets.all(10.0),
-                        child: Text(
-                          'Lưu',
-                          style: TextStyle(color: Colors.white, fontSize: 20),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
+              Expanded(
+                child: TabBarView(
+                  children: [
+                    SingleChildScrollView(child: TabContentAddTask()),
+                    SingleChildScrollView(child: TabContentPerson()),
+                  ],
+                ),
               ),
             ],
           ),
