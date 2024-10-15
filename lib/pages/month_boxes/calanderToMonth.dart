@@ -108,8 +108,7 @@ class _CalendarWidgetState extends State<CalendarWidget> {
                 _currentDate.month == today.month &&
                 day == today.day;
 
-            bool isWeekend =
-                (index % 7 == 0 || index % 7 == 6); // Thứ 7 và Chủ nhật
+            bool isWeekend = (index % 7 == 0 || index % 7 == 7); // Chủ nhật
             bool hasCheckmark =
                 [1, 2, 4, 6, 10, 12, 16, 18, 20, 22, 26, 30].contains(day);
 

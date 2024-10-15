@@ -341,10 +341,11 @@ class _HomePageState extends State<HomePage>
     _selectedMonth = DateFormat('MMMM').format(date);
   }
 
-  void updateCounts(int morning, int afternoon) {
+  void updateCounts(int morningCount, int afternoonCount) {
     setState(() {
-      morningCount = morning;
-      afternoonCount = afternoon;
+      // Cập nhật số lượng cho buổi sáng và chiều
+      this.morningCount = morningCount; // Giả sử bạn có morningCount
+      this.afternoonCount = afternoonCount; // Giả sử bạn có afternoonCount
     });
   }
 
@@ -573,18 +574,11 @@ class _HomePageState extends State<HomePage>
 
   Widget _buildTabBarView() {
     return TabBarView(
-      controller: _tabController,
+      controller:
+          _tabController, // Ensure you have initialized this controller properly
       children: [
-        TabContent(
-          session: 'sáng',
-          selectedDate: _currentDate,
-          updateCounts: updateCounts,
-        ),
-        TabContent(
-          session: 'chiều',
-          selectedDate: _currentDate,
-          updateCounts: updateCounts,
-        ),
+        TabContent(),
+        TabContent(),
       ],
     );
   }

@@ -37,8 +37,7 @@ class _TabContentAddTaskState extends State<TabContentAddTask>
     ColorModel? fetchedColorModel =
         await _apiProvider.getColor(User.token.toString());
     setState(() {
-      colorModelList =
-          fetchedColorModel; // Cập nhật colorModelList sau khi dữ liệu được tải
+      colorModelList = fetchedColorModel;
     });
   }
 
@@ -58,7 +57,6 @@ class _TabContentAddTaskState extends State<TabContentAddTask>
     }
   }
 
-  // Phương thức để chuyển ColorModel thành danh sách màu
   List<String> getColorsFromModel(ColorModel colorModel) {
     List<String> colorList = [];
     if (colorModel.color1 != null) colorList.add(colorModel.color1!);

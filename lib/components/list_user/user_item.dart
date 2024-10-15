@@ -236,10 +236,7 @@ class _UserListCardState extends State<UserListCard>
                                               onTap: () {
                                                 Navigator.of(context).push(
                                                   SlideFromRightPageRoute(
-                                                    page: MyList(
-                                                      onItemSelected:
-                                                          _onItemSelected,
-                                                    ),
+                                                    page: MyList(),
                                                   ),
                                                 );
                                               },

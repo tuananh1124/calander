@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_calendar/pages/login/bloc/bloc/auth_bloc.dart';
+import 'package:flutter_calendar/pages/login/logintab.dart';
 import 'package:flutter_calendar/pages/month_boxes/bloc/month_bloc.dart';
 import 'package:flutter_calendar/pages/month_boxes/calanderToMonth.dart';
 import 'package:flutter_calendar/pages/home_page/bloc/date_bloc.dart';
@@ -32,7 +33,8 @@ class MyApp extends StatelessWidget {
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
-        home: HomePage(),
+        home: LoginPage(),
+        //home: HomePage(),
         builder: EasyLoading.init(),
       ),
     );

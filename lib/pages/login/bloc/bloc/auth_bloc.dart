@@ -18,10 +18,8 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     emit(AuthLoading());
 
     try {
-      LoginModel? loginData = await ApiProvider().login(
-          event.username, // Ensure the username is correctly passed
-          event.password,
-          '');
+      LoginModel? loginData =
+          await ApiProvider().login(event.username, event.password, '');
 
       print('data: $loginData');
 

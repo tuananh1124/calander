@@ -2,8 +2,17 @@ const String serverURL = 'http://dev-api-giaoviec.ngn.com.vn';
 
 const String loginAPI = '$serverURL/website/login';
 const String getColorAPI = '$serverURL/website/event-calendar/get-colors';
+const String getTypeAPI = '$serverURL/website/event-calendar/get-types';
+const String getUserOrganizationAPI =
+    '$serverURL/website/user-organization/search?keyword=a';
+
 const String getListOfPersonalAPI =
-    '$serverURL/website/event-calendar/list-of-personal?fromDate=0&toDate=0&excludeCreator=true';
+    '$serverURL/website/event-calendar/list-of-personal';
+
+const String getListSubOrganizationAPI = '$serverURL/website/organization';
+
+const String getListRootOrganizationAPI =
+    '$serverURL/website/organization/list-root-organizations';
 
 const int statusOk = 200;
 const int statusCreated = 201;

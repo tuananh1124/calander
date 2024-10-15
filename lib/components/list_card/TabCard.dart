@@ -1,38 +1,56 @@
 import 'package:flutter/material.dart';
 import 'package:auto_size_text/auto_size_text.dart';
-import 'package:flutter_easyloading/flutter_easyloading.dart';
+import 'package:flutter_calendar/models/list_of_user_personal_model.dart';
+import 'package:flutter_calendar/models/login_model.dart';
+import 'package:flutter_calendar/network/api_service.dart';
 
-class ExpandableCard extends StatelessWidget {
-  final String nameCreate;
-  final String date;
-  final String time;
-  final String content;
-  final String note;
-  final String file;
-  final String preside;
-  final String member;
-  final String location;
-  final String resources;
-  final int? error;
-  final String session;
-  final VoidCallback onDelete;
+class ExpandableCard extends StatefulWidget {
+  final String? creator;
+  final String? createdTime;
+  final String? updatedTime;
+  final String? content;
+  final String? notes;
+  final String? color;
+  final String? hosts;
+  final String? attendeesRequired;
+  final String? attendeesNoRequired;
+  final String? resources;
+  final String? attachments;
 
   const ExpandableCard({
     Key? key,
-    required this.nameCreate,
-    required this.date,
-    required this.time,
-    required this.content,
-    required this.note,
-    required this.file,
-    required this.preside,
-    required this.member,
-    required this.location,
-    required this.resources,
-    this.error,
-    required this.onDelete,
-    required this.session,
+    this.creator,
+    this.createdTime,
+    this.updatedTime,
+    this.content,
+    this.notes,
+    this.color,
+    this.hosts,
+    this.attendeesRequired,
+    this.attendeesNoRequired,
+    this.resources,
+    this.attachments,
   }) : super(key: key);
+
+  @override
+  _ExpandableCardState createState() => _ExpandableCardState();
+}
+
+class _ExpandableCardState extends State<ExpandableCard>
+    with SingleTickerProviderStateMixin {
+  List<Map<String, dynamic>> _filteredDataUserorganization = [];
+  final ApiProvider _apiProvider = ApiProvider();
+
+  @override
+  void initState() {
+    super.initState();
+    ListOfPersonalApi();
+  }
+
+  Future<void> ListOfPersonalApi() async {
+    List<ListofpersonalModel>? modelList =
+        await _apiProvider.getListOfPersonal(User.token.toString());
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -63,7 +81,7 @@ class ExpandableCard extends StatelessWidget {
       children: [
         Flexible(
           child: AutoSizeText(
-            content,
+            widget.content!, // Thay đổi từ content sang widget.content
             style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.bold,
@@ -72,7 +90,7 @@ class ExpandableCard extends StatelessWidget {
             textAlign: TextAlign.left,
           ),
         ),
-        _buildDateInfo(context), // Add _buildDateInfo here
+        _buildDateInfo(context),
         _buildErrorIndicator(),
       ],
     );
@@ -80,9 +98,9 @@ class ExpandableCard extends StatelessWidget {
 
   Widget _buildErrorIndicator() {
     Color indicatorColor = Colors.green;
-    if (error == 1) {
+    if (widget.attachments == 1) {
       indicatorColor = Colors.yellow;
-    } else if (error == 2) {
+    } else if (widget.attachments == 2) {
       indicatorColor = Colors.red;
     }
 
@@ -107,14 +125,13 @@ class ExpandableCard extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             _buildTimeInfo(context),
-            // _buildDateInfo(context),
             _buildActionButtons(context),
           ],
         ),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            _buildPerson(context, member),
+            _buildPerson(context, widget.attendeesRequired!),
             _buildAttachment(context),
           ],
         ),
@@ -124,35 +141,35 @@ class ExpandableCard extends StatelessWidget {
 
   Widget _buildTimeInfo(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
-    final iconSize = screenWidth * 0.03; // Tỉ lệ kích thước icon
-    final textSize = screenWidth * 0.04; // Tỉ lệ kích thước chữ
+    final iconSize = screenWidth * 0.03;
+    final textSize = screenWidth * 0.04;
 
     return Row(
       children: [
         Icon(Icons.timer_outlined, color: Colors.grey, size: iconSize),
-        // Khoảng cách giữa icon và text
-        Text(time, style: TextStyle(color: Colors.grey, fontSize: textSize)),
+        Text(widget.createdTime!,
+            style: TextStyle(color: Colors.grey, fontSize: textSize)),
       ],
     );
   }
 
   Widget _buildDateInfo(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
-    final iconSize = screenWidth * 0.03; // Tỉ lệ kích thước icon
-    final textSize = screenWidth * 0.04; // Tỉ lệ kích thước chữ
+    final iconSize = screenWidth * 0.03;
+    final textSize = screenWidth * 0.04;
 
     return Row(
       children: [
         Icon(Icons.date_range, color: Colors.grey, size: iconSize),
-        // Khoảng cách giữa icon và text
-        Text(date, style: TextStyle(color: Colors.grey, fontSize: textSize)),
+        Text(widget.updatedTime!,
+            style: TextStyle(color: Colors.grey, fontSize: textSize)),
       ],
     );
   }
 
   Widget _buildActionButtons(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
-    final buttonSize = screenWidth * 0.06; // Tỉ lệ kích thước nút
+    final buttonSize = screenWidth * 0.06;
 
     return Row(
       children: [
@@ -182,44 +199,36 @@ class ExpandableCard extends StatelessWidget {
 
   Widget _buildPerson(BuildContext context, String member) {
     final screenWidth = MediaQuery.of(context).size.width;
-    final iconSize = screenWidth * 0.03; // Tỉ lệ kích thước icon
-    final textSize = screenWidth * 0.04; // Tỉ lệ kích thước chữ
+    final iconSize = screenWidth * 0.03;
+    final textSize = screenWidth * 0.04;
 
-    // Tính số lượng thành viên
     List<String> membersList = member.split(',').map((e) => e.trim()).toList();
     int numberOfMembers = membersList.length;
 
-    // Tạo chuỗi hiển thị số lượng
-    String displayText = numberOfMembers > 1
-        ? "+$numberOfMembers"
-        : "1"; // Hiển thị số lượng thành viên
+    String displayText = numberOfMembers > 1 ? "+$numberOfMembers" : "1";
 
     return Row(
       children: [
         Icon(Icons.person, color: Colors.grey, size: iconSize),
-        SizedBox(width: 8), // Khoảng cách giữa icon và text
-        Text(
-          'Số lượng người: ',
-          style: TextStyle(color: Colors.grey, fontSize: textSize),
-        ),
-        Text(
-          displayText,
-          style: TextStyle(color: Colors.grey, fontSize: textSize),
-        ),
+        SizedBox(width: 8),
+        Text('Số lượng người: ',
+            style: TextStyle(color: Colors.grey, fontSize: textSize)),
+        Text(displayText,
+            style: TextStyle(color: Colors.grey, fontSize: textSize)),
       ],
     );
   }
 
   Widget _buildAttachment(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
-    final iconSize = screenWidth * 0.03; // Tỉ lệ kích thước icon
-    final textSize = screenWidth * 0.04; // Tỉ lệ kích thước chữ
+    final iconSize = screenWidth * 0.03;
+    final textSize = screenWidth * 0.04;
 
     return Row(
       children: [
         Icon(Icons.file_copy_rounded, color: Colors.grey, size: iconSize),
-        // Khoảng cách giữa icon và text
-        Text(file, style: TextStyle(color: Colors.grey, fontSize: textSize)),
+        Text(widget.color!,
+            style: TextStyle(color: Colors.grey, fontSize: textSize)),
       ],
     );
   }
@@ -232,23 +241,20 @@ class ExpandableCard extends StatelessWidget {
   }) {
     return Material(
       color: color,
-      borderRadius: BorderRadius.circular(size * 0.3), // Tỉ lệ bo góc
+      borderRadius: BorderRadius.circular(size * 0.3),
       child: InkWell(
         borderRadius: BorderRadius.circular(size * 0.3),
         onTap: onTap,
         child: Padding(
           padding: EdgeInsets.symmetric(
               horizontal: size * 0.4, vertical: size * 0.2),
-          child: Icon(icon,
-              color: Colors.white, size: size * 0.7), // Tỉ lệ kích thước icon
+          child: Icon(icon, color: Colors.white, size: size * 0.7),
         ),
       ),
     );
   }
 
-  void _showEditBottomSheet(BuildContext context) {
-    // Implement your edit bottom sheet logic here
-  }
+  void _showEditBottomSheet(BuildContext context) {}
 
   void _showDetailDialog(BuildContext context) {
     showDialog(
@@ -260,16 +266,17 @@ class ExpandableCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildDetailRow('Nội dung: ', content),
-                _buildDetailRow('Thời gian: ', time),
-                _buildDetailRow('Ngày: ', date),
-                _buildDetailRow('Người tạo sự kiện: ', nameCreate),
-                _buildDetailRow('Ghi chú: ', note),
-                _buildDetailRow('Đính kèm: ', file),
-                _buildDetailRow('Cán bộ chủ trì: ', preside),
-                _buildDetailRow('Cán bộ tham dự: ', member),
-                _buildDetailRow('Địa điểm: ', location),
-                _buildDetailRow('Tài nguyên khác: ', resources),
+                _buildDetailRow('Nội dung: ', widget.content!),
+                _buildDetailRow('Thời gian: ', widget.createdTime!),
+                _buildDetailRow('Ngày: ', widget.updatedTime!),
+                _buildDetailRow('Người tạo sự kiện: ', widget.creator!),
+                _buildDetailRow('Ghi chú: ', widget.notes!),
+                _buildDetailRow('Đính kèm: ', widget.color!),
+                _buildDetailRow('Cán bộ chủ trì: ', widget.hosts!),
+                _buildDetailRow(
+                    'Cán bộ tham dự bắt buộc: ', widget.attendeesRequired!),
+                _buildDetailRow('Địa điểm: ', widget.attendeesNoRequired!),
+                _buildDetailRow('Tài nguyên khác: ', widget.resources!),
               ],
             ),
           ),
@@ -290,13 +297,9 @@ class ExpandableCard extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            title,
-            style: TextStyle(fontWeight: FontWeight.bold),
-          ),
+          Text(title, style: TextStyle(fontWeight: FontWeight.bold)),
           Expanded(
-            // Sử dụng Expanded để nội dung không bị giới hạn
-            child: Text(content, overflow: TextOverflow.visible), // Bỏ ellipsis
+            child: Text(content, overflow: TextOverflow.visible),
           ),
         ],
       ),
@@ -308,48 +311,12 @@ class ExpandableCard extends StatelessWidget {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Thông báo!'),
-          content: RichText(
-            text: TextSpan(
-              children: [
-                TextSpan(
-                  text: 'Bạn có muốn ',
-                  style: DefaultTextStyle.of(context).style,
-                ),
-                const TextSpan(
-                  text: 'xóa ghi chú',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: Colors.red,
-                  ),
-                ),
-                TextSpan(
-                  text: ' này?',
-                  style: DefaultTextStyle.of(context).style,
-                ),
-              ],
-            ),
-          ),
-          actions: <Widget>[
+          title: const Text('Thông báo'),
+          content: const Text('Bạn có chắc chắn muốn xóa không?'),
+          actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Hủy', style: TextStyle(color: Colors.black)),
-            ),
-            TextButton(
-              onPressed: () async {
-                EasyLoading.show();
-                await Future.delayed(const Duration(milliseconds: 200));
-                EasyLoading.dismiss();
-                Navigator.of(context).pop();
-                onDelete();
-              },
-              child: const Text(
-                'Xóa',
-                style: TextStyle(
-                  color: Colors.red,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
+              child: const Text('Hủy bỏ'),
             ),
           ],
         );

@@ -25,7 +25,7 @@ class _LoginPageState extends State<LoginPage> {
   @override
   void initState() {
     super.initState();
-    _emailController.text = 'leminhhung';
+    _emailController.text = 'buivanthach';
     _passwordController.text = 'abc123';
   }
 
@@ -64,17 +64,17 @@ class _LoginPageState extends State<LoginPage> {
           } else if (state is AuthSuccess) {
             EasyLoading.dismiss();
             print('Login thành công');
-            User.id = state.loginData.id!;
-            User.email = state.loginData.email!;
-            User.phone = state.loginData.phone!;
-            User.username = state.loginData.username!;
+            // User.id = state.loginData.id!;
+            // User.email = state.loginData.email!;
+            // User.phone = state.loginData.phone!;
+            // User.username = state.loginData.username!;
             User.fullName = state.loginData.fullName!;
             User.token = state.loginData.token!;
 
-            print('Token of id: ${User.id}');
-            print('Token of email: ${User.email}');
-            print('Token of phone: ${User.phone}');
-            print('Token of username: ${User.username}');
+            // print('Token of id: ${User.id}');
+            // print('Token of email: ${User.email}');
+            // print('Token of phone: ${User.phone}');
+            // print('Token of username: ${User.username}');
             print('Token of fullName: ${User.fullName}');
             print('Token of token: ${User.token}');
 

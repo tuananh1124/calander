@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_calendar/models/list_sub_organization_model.dart';
+import 'package:flutter_calendar/models/login_model.dart';
+import 'package:flutter_calendar/network/api_service.dart';
 import 'package:flutter_calendar/pages/month_boxes/calanderToMonth.dart';
 import 'package:table_calendar/table_calendar.dart';
 
@@ -12,38 +15,33 @@ class _SearchBarWithDropdownState extends State<SearchBarWithDropdown> {
   String? _selectedUnit;
   String _searchQuery = '';
   bool _isSearching = false;
+  final ApiProvider _apiProvider = ApiProvider();
+  List<ListSubOrganizationModel> unitData = [];
 
-  List<Map<String, dynamic>> unitData = [
-    {'department': 'Vụ Tổ Chức Cán Bộ'},
-    {'department': 'Phòng Tổng hợp'},
-    {'department': 'Phòng Cá'},
-    {'department': 'Vụ Quản lý Dự án'},
-    {'department': 'Phòng Hành chính'},
-    {'department': 'Phòng Kế toán'},
-    {'department': 'Vụ Phát triển Kinh doanh'},
-    {'department': 'Phòng Nhân sự'},
-    {'department': 'Phòng Dịch vụ Khách hàng'},
-    {'department': 'Vụ Chiến lược'},
-    {'department': 'Phòng Marketing'},
-    {'department': 'Phòng Kỹ thuật'},
-    {'department': 'Vụ Đào tạo'},
-    {'department': 'Phòng IT'},
-    {'department': 'Phòng Quản lý Chất lượng'},
-    {'department': 'Vụ Nghiên cứu và Phát triển'},
-    {'department': 'Phòng Hỗ trợ Kỹ thuật'},
-    {'department': 'Phòng Quản lý Hợp đồng'},
-    {'department': 'Vụ Tài chính'},
-    {'department': 'Phòng Xây dựng'},
-    {'department': 'Phòng Kiểm toán'},
-  ];
+  @override
+  void initState() {
+    super.initState();
+    ListSubOrganizationApi();
+  }
 
+  Future<void> ListSubOrganizationApi() async {
+    // List<ListSubOrganizationModel>? userList =
+    //     await _apiProvider.getListSubOrganization(
+    //         '605b064ad9b8222a8db47eb8', User.token.toString());
+    // if (userList != null) {
+    //   setState(() {
+    //     unitData = userList;
+    //   });
+    // }
+  }
+
+  // Cập nhật truy vấn tìm kiếm để sử dụng `unit.name`
   List<String> getFilteredDropdownItems() {
     if (_isSearching) {
       return unitData
-          .where((unit) => unit['department']!
-              .toLowerCase()
-              .contains(_searchQuery.toLowerCase()))
-          .map((unit) => unit['department'] as String)
+          .where((unit) =>
+              unit.name!.toLowerCase().contains(_searchQuery.toLowerCase()))
+          .map((unit) => unit.name!)
           .toList();
     } else {
       return _selectedUnit != null ? [_selectedUnit!] : [];
@@ -86,7 +84,7 @@ class _SearchBarWithDropdownState extends State<SearchBarWithDropdown> {
           children: [
             Expanded(
               child: Text(
-                _selectedUnit ?? 'Tìm kiếm phòng ban',
+                _selectedUnit ?? 'Đơn vị hiển thị',
                 style: TextStyle(color: Colors.black),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
@@ -140,7 +138,7 @@ class _SearchBarWithDropdownState extends State<SearchBarWithDropdown> {
         });
       },
       decoration: InputDecoration(
-        labelText: 'Tìm kiếm phòng ban',
+        labelText: 'Tìm kiếm đơn vị',
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
         ),
