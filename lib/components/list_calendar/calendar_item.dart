@@ -10,6 +10,14 @@ class CalendarItem extends StatefulWidget {
 class _CalendarItemState extends State<CalendarItem> {
   @override
   Widget build(BuildContext context) {
-    return Container();
+    return Container(
+      child: Card(
+        margin: EdgeInsets.zero,
+        color: Colors.white,
+        child: ListTile(
+          contentPadding: EdgeInsets.fromLTRB(10, 0, 10, 0),
+        ),
+      ),
+    );
   }
 }
