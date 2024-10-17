@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_calendar/config/ngn_constant.dart';
 import 'package:flutter_calendar/models/list_root_organization_model.dart';
 import 'package:flutter_calendar/models/login_model.dart';
-import 'package:flutter_calendar/models/userorganization_model.dart';
+import 'package:flutter_calendar/models/organization_node.dart';
+import 'package:flutter_calendar/models/user_organization_model.dart';
 import 'package:flutter_calendar/network/api_service.dart';
 
 class MyList extends StatefulWidget {
@@ -12,19 +12,20 @@ class MyList extends StatefulWidget {
 
 class _MyListState extends State<MyList> with SingleTickerProviderStateMixin {
   TabController? _tabController;
-
   final ApiProvider _apiProvider = ApiProvider();
-
   List<Map<String, dynamic>> _filteredDataListUserorganization = [];
-  List<Map<String, dynamic>> _filteredDataListSubOrganizations = [];
-
+  List<OrganizationNode> _organizationTree = [];
   final TextEditingController _searchorganizationName = TextEditingController();
   final TextEditingController _searchEmployee = TextEditingController();
+  List<Map<String, String>> _currentEmployeeList = [];
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
+    _tabController!.addListener(() {
+      if (_tabController!.index == 1) {}
+    });
     UserorganizationlApi();
     listSubOrganizations();
   }
@@ -37,8 +38,8 @@ class _MyListState extends State<MyList> with SingleTickerProviderStateMixin {
       setState(() {
         _filteredDataListUserorganization = userList.map((user) {
           return {
-            'fullName': user.fullName,
-            'jobTitle': user.jobTitle,
+            'fullName': user.fullName ?? '',
+            'jobTitle': user.jobTitle ?? '',
           };
         }).toList();
       });
@@ -48,35 +49,46 @@ class _MyListState extends State<MyList> with SingleTickerProviderStateMixin {
   Future<void> listSubOrganizations() async {
     List<ListRootOrganizationModel>? userListSubOrganizations =
         await _apiProvider.getListRootOrganization(User.token.toString());
+    List<UserorganizationModel>? userList =
+        await _apiProvider.getUserOrganization(User.token.toString());
 
-    if (userListSubOrganizations != null) {
-      List<Map<String, dynamic>> tempList = [];
+    if (userListSubOrganizations != null && userList != null) {
+      List<OrganizationNode> rootNodes = [];
 
-      void addOrganizationAndSubOrgs(
+      OrganizationNode createNode(
           dynamic org, bool isRoot, String? parentId, int level) {
-        tempList.add({
-          'name': org.name,
-          'isRoot': isRoot,
-          'parentId': parentId,
-          'level': level,
-        });
+        List<Map<String, String>> orgUsers = userList
+            .where((user) => user.organizationId == org.id)
+            .map((user) => {
+                  'fullName': user.fullName ?? '',
+                  'jobTitle': user.jobTitle ?? '',
+                })
+            .toList();
 
-        if (org.subOrganizations != null) {
-          for (var subOrg in org.subOrganizations) {
-            addOrganizationAndSubOrgs(subOrg, false, org.id, level + 1);
-          }
-        }
+        return OrganizationNode(
+          name: org.name,
+          id: org.id,
+          isRoot: isRoot,
+          parentId: parentId,
+          level: level,
+          children: org.subOrganizations
+                  ?.map<OrganizationNode>(
+                      (subOrg) => createNode(subOrg, false, org.id, level + 1))
+                  ?.toList() ??
+              [],
+          users: orgUsers,
+        );
       }
 
       for (var organization in userListSubOrganizations) {
-        addOrganizationAndSubOrgs(organization, true, null, 0);
+        rootNodes.add(createNode(organization, true, null, 0));
       }
 
       setState(() {
-        _filteredDataListSubOrganizations = tempList;
+        _organizationTree = rootNodes;
       });
     } else {
-      print('The userListSubOrganizations is null.');
+      print('Failed to fetch organizations or users.');
     }
   }
 
@@ -157,7 +169,7 @@ class _MyListState extends State<MyList> with SingleTickerProviderStateMixin {
       children: [
         _buildSearchBar(_searchorganizationName, 'Tìm kiếm đơn vị'),
         Expanded(
-          child: _buildDepartmentList(),
+          child: _buildDepartmentTree(),
         ),
       ],
     );
@@ -187,7 +199,6 @@ class _MyListState extends State<MyList> with SingleTickerProviderStateMixin {
           ),
         ),
         onChanged: (value) {
-          // Cập nhật danh sách khi người dùng nhập tìm kiếm
           if (controller == _searchorganizationName) {
           } else if (controller == _searchEmployee) {}
         },
@@ -195,55 +206,101 @@ class _MyListState extends State<MyList> with SingleTickerProviderStateMixin {
     );
   }
 
-  Widget _buildDepartmentList() {
-    return ListView.builder(
-      itemCount: _filteredDataListSubOrganizations.length,
-      itemBuilder: (context, index) {
-        final data = _filteredDataListSubOrganizations[index];
+  Widget _buildDepartmentTree() {
+    return ListView(
+      children: _organizationTree.map((node) => _buildTreeNode(node)).toList(),
+    );
+  }
 
-        return Padding(
-          padding: EdgeInsets.only(left: data['level'] * 20.0),
-          child: ListTile(
-            leading: Icon(
-              data['isRoot']
-                  ? Icons.account_balance
-                  : Icons.subdirectory_arrow_right,
-              size: data['isRoot'] ? 24 : 20,
+  Widget _buildTreeNode(OrganizationNode node) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        InkWell(
+          onTap: () {
+            setState(() {
+              node.isExpanded = !node.isExpanded;
+            });
+          },
+          child: Padding(
+            padding: EdgeInsets.symmetric(vertical: 8.0, horizontal: 4.0),
+            child: Row(
+              children: [
+                SizedBox(width: node.level * 20.0),
+                Icon(
+                  node.isRoot
+                      ? Icons.account_balance
+                      : Icons.subdirectory_arrow_right,
+                  size: node.isRoot ? 28 : 24,
+                  color: Colors.blue,
+                ),
+                SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    '${node.name} (${node.users.length})',
+                    style: TextStyle(
+                      fontSize: node.isRoot ? 18 : 16,
+                      fontWeight:
+                          node.isRoot ? FontWeight.bold : FontWeight.normal,
+                      color: Colors.black87,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 1,
+                  ),
+                ),
+                if (node.children.isNotEmpty || node.users.isNotEmpty)
+                  Icon(
+                    node.isExpanded ? Icons.expand_less : Icons.expand_more,
+                    size: 24,
+                    color: Colors.blue,
+                  ),
+              ],
             ),
-            title: Text(
-              data['name'] ?? '',
-              style: TextStyle(
-                fontWeight:
-                    data['isRoot'] ? FontWeight.bold : FontWeight.normal,
+          ),
+        ),
+        if (node.isExpanded) ...[
+          if (node.users.isNotEmpty)
+            Padding(
+              padding: EdgeInsets.only(left: (node.level + 1) * 20.0),
+              child: ElevatedButton(
+                onPressed: () {
+                  setState(() {
+                    _currentEmployeeList = node.users;
+                    _tabController?.animateTo(1); // Chuyển sang tab nhân viên
+                  });
+                },
+                child: Text('Xem ${node.users.length} nhân viên'),
               ),
             ),
-            onTap: () {
-              // Xử lý khi người dùng nhấn vào một tổ chức
-            },
-          ),
-        );
-      },
+          ...node.children.map((childNode) => _buildTreeNode(childNode)),
+        ],
+      ],
     );
   }
 
   Widget _buildEmployeeList() {
-    return ListView.builder(
-      itemCount: _filteredDataListUserorganization.length,
-      itemBuilder: (context, index) {
-        final data = _filteredDataListUserorganization[index];
-        bool isSelected = false; // Có thể thêm logic chọn/xóa ở đây
+    return StatefulBuilder(
+      builder: (BuildContext context, StateSetter setState) {
+        return ListView.builder(
+          key: ValueKey(_currentEmployeeList.length), // Thêm key này
+          itemCount: _currentEmployeeList.length,
+          itemBuilder: (context, index) {
+            final data = _currentEmployeeList[index];
+            bool isSelected = false; // Có thể thêm logic chọn/xóa ở đây
 
-        return ListTile(
-          title: Text(data['fullName'] ?? ''),
-          subtitle: Text(data['jobTitle'] ?? ''),
-          trailing: ElevatedButton(
-            onPressed: () {
-              setState(() {
-                isSelected = !isSelected;
-              });
-            },
-            child: Text(isSelected ? 'Xóa' : 'Chọn'),
-          ),
+            return ListTile(
+              title: Text(data['fullName'] ?? ''),
+              subtitle: Text(data['jobTitle'] ?? ''),
+              trailing: ElevatedButton(
+                onPressed: () {
+                  setState(() {
+                    isSelected = !isSelected;
+                  });
+                },
+                child: Text(isSelected ? 'Xóa' : 'Chọn'),
+              ),
+            );
+          },
         );
       },
     );

@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-class ListofpersonalModel {
+class ListEventcalendarModel {
   final String? id;
   final int? createdTime;
   final int? updatedTime;
@@ -10,7 +10,6 @@ class ListofpersonalModel {
   final String? content;
   final String? notes;
   final String? color;
-  final String? subcolor;
   final List<Host>? hosts; // Chuyển thành List<Host> thay vì String
   final List<dynamic>? attendeesRequired;
   final List<dynamic>? attendeesNoRequired;
@@ -18,7 +17,7 @@ class ListofpersonalModel {
   final List<dynamic>? attachments;
   final Creator? creator;
 
-  ListofpersonalModel({
+  ListEventcalendarModel({
     this.id,
     this.createdTime,
     this.updatedTime,
@@ -28,7 +27,6 @@ class ListofpersonalModel {
     this.content,
     this.notes,
     this.color,
-    this.subcolor,
     this.hosts, // Sửa lại kiểu
     this.attendeesRequired,
     this.attendeesNoRequired,
@@ -37,8 +35,8 @@ class ListofpersonalModel {
     this.creator,
   });
 
-  factory ListofpersonalModel.fromJson(Map<String, dynamic> json) {
-    return ListofpersonalModel(
+  factory ListEventcalendarModel.fromJson(Map<String, dynamic> json) {
+    return ListEventcalendarModel(
       id: json['id'],
       createdTime: json['createdTime'],
       updatedTime: json['updatedTime'],
@@ -48,7 +46,6 @@ class ListofpersonalModel {
       content: json['content'],
       notes: json['notes'],
       color: json['color'],
-      subcolor: json['subcolor'],
       hosts: (json['hosts'] as List<dynamic>?)
           ?.map((host) => Host.fromJson(host))
           .toList(), // Sửa lại cách xử lý danh sách hosts

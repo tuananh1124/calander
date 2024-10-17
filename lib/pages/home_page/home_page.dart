@@ -577,8 +577,8 @@ class _HomePageState extends State<HomePage>
       controller:
           _tabController, // Ensure you have initialized this controller properly
       children: [
-        TabContent(),
-        TabContent(),
+        TabcardList(),
+        TabcardList(),
       ],
     );
   }

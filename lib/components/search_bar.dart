@@ -21,27 +21,27 @@ class _SearchBarWithDropdownState extends State<SearchBarWithDropdown> {
   @override
   void initState() {
     super.initState();
-    ListSubOrganizationApi();
+    _fetchSubOrganizations();
   }
 
-  Future<void> ListSubOrganizationApi() async {
-    // List<ListSubOrganizationModel>? userList =
-    //     await _apiProvider.getListSubOrganization(
-    //         '605b064ad9b8222a8db47eb8', User.token.toString());
-    // if (userList != null) {
-    //   setState(() {
-    //     unitData = userList;
-    //   });
-    // }
+  Future<void> _fetchSubOrganizations() async {
+    try {
+      List<ListSubOrganizationModel>? userList = await _apiProvider
+          .getListSubSearchOrganization(User.token.toString());
+      if (userList != null) {
+        setState(() {
+          unitData = userList;
+        });
+      }
+    } catch (e) {}
   }
 
-  // Cập nhật truy vấn tìm kiếm để sử dụng `unit.name`
   List<String> getFilteredDropdownItems() {
     if (_isSearching) {
       return unitData
           .where((unit) =>
-              unit.name!.toLowerCase().contains(_searchQuery.toLowerCase()))
-          .map((unit) => unit.name!)
+              unit.name.toLowerCase().contains(_searchQuery.toLowerCase()))
+          .map((unit) => unit.name)
           .toList();
     } else {
       return _selectedUnit != null ? [_selectedUnit!] : [];
@@ -67,6 +67,7 @@ class _SearchBarWithDropdownState extends State<SearchBarWithDropdown> {
                 ),
               ),
             ),
+            // Thêm danh sách tên đơn vị ở đây
           ],
         ),
       ),
@@ -149,25 +150,38 @@ class _SearchBarWithDropdownState extends State<SearchBarWithDropdown> {
 
   Widget buildUnitList() {
     return ListView(
-      children: getFilteredDropdownItems().map((unit) {
+      children: getFilteredDropdownItems().map((unitName) {
+        final unit = unitData.firstWhere((u) => u.name == unitName);
         return ListTile(
           title: Text(
-            unit,
+            unit.name,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
-          trailing: _selectedUnit == unit
+          trailing: _selectedUnit == unit.name
               ? Icon(Icons.check, color: Colors.green)
               : null,
           onTap: () {
             setState(() {
-              _selectedUnit = unit;
+              _selectedUnit = unit.name;
               _isSearching = false;
             });
             Navigator.pop(context);
           },
         );
       }).toList(),
+    );
+  }
+
+  Widget buildUnitNamesList() {
+    return ListView.builder(
+      shrinkWrap: true,
+      itemCount: unitData.length,
+      itemBuilder: (context, index) {
+        return ListTile(
+          title: Text(unitData[index].name),
+        );
+      },
     );
   }
 }

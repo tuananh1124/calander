@@ -7,7 +7,6 @@ class UserorganizationModel {
   final String? organizationId;
   final String? organizationName;
   final String? pathName;
-  final List<String>? permissions; // Chỉnh sửa thành danh sách List<String>
 
   UserorganizationModel({
     this.id,
@@ -16,7 +15,6 @@ class UserorganizationModel {
     this.organizationId,
     this.organizationName,
     this.pathName,
-    this.permissions,
   });
 
   factory UserorganizationModel.fromJson(Map<String, dynamic> json) {
@@ -28,9 +26,6 @@ class UserorganizationModel {
           json['organizationId'], // Sửa lại ánh xạ đúng organizationId
       organizationName: json['organizationName'],
       pathName: json['pathName'],
-      permissions: json['permissions'] != null
-          ? List<String>.from(json['permissions'])
-          : [],
     );
   }
 }

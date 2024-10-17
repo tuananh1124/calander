@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:auto_size_text/auto_size_text.dart';
-import 'package:flutter_calendar/models/list_of_user_personal_model.dart';
+import 'package:flutter_calendar/models/list_eventcalendar_model.dart';
 import 'package:flutter_calendar/models/login_model.dart';
 import 'package:flutter_calendar/network/api_service.dart';
 
-class ExpandableCard extends StatefulWidget {
+class TabcardItem extends StatefulWidget {
   final String? creator;
   final String? createdTime;
-  final String? updatedTime;
   final String? content;
   final String? notes;
   final String? color;
@@ -17,11 +16,10 @@ class ExpandableCard extends StatefulWidget {
   final String? resources;
   final String? attachments;
 
-  const ExpandableCard({
+  const TabcardItem({
     Key? key,
     this.creator,
     this.createdTime,
-    this.updatedTime,
     this.content,
     this.notes,
     this.color,
@@ -33,10 +31,10 @@ class ExpandableCard extends StatefulWidget {
   }) : super(key: key);
 
   @override
-  _ExpandableCardState createState() => _ExpandableCardState();
+  _TabcardItemState createState() => _TabcardItemState();
 }
 
-class _ExpandableCardState extends State<ExpandableCard>
+class _TabcardItemState extends State<TabcardItem>
     with SingleTickerProviderStateMixin {
   List<Map<String, dynamic>> _filteredDataUserorganization = [];
   final ApiProvider _apiProvider = ApiProvider();
@@ -44,12 +42,6 @@ class _ExpandableCardState extends State<ExpandableCard>
   @override
   void initState() {
     super.initState();
-    ListOfPersonalApi();
-  }
-
-  Future<void> ListOfPersonalApi() async {
-    List<ListofpersonalModel>? modelList =
-        await _apiProvider.getListOfPersonal(User.token.toString());
   }
 
   @override
@@ -161,8 +153,6 @@ class _ExpandableCardState extends State<ExpandableCard>
     return Row(
       children: [
         Icon(Icons.date_range, color: Colors.grey, size: iconSize),
-        Text(widget.updatedTime!,
-            style: TextStyle(color: Colors.grey, fontSize: textSize)),
       ],
     );
   }
@@ -268,7 +258,6 @@ class _ExpandableCardState extends State<ExpandableCard>
               children: [
                 _buildDetailRow('Nội dung: ', widget.content!),
                 _buildDetailRow('Thời gian: ', widget.createdTime!),
-                _buildDetailRow('Ngày: ', widget.updatedTime!),
                 _buildDetailRow('Người tạo sự kiện: ', widget.creator!),
                 _buildDetailRow('Ghi chú: ', widget.notes!),
                 _buildDetailRow('Đính kèm: ', widget.color!),
