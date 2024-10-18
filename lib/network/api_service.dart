@@ -1,8 +1,9 @@
 import 'dart:convert';
 import 'package:flutter_calendar/config/ngn_constant.dart';
 import 'package:flutter_calendar/models/color_model.dart';
+import 'package:flutter_calendar/models/list_event_resource_model.dart';
 import 'package:flutter_calendar/models/list_root_organization_model.dart';
-import 'package:flutter_calendar/models/list_eventcalendar_model.dart';
+import 'package:flutter_calendar/models/list_event_calendar_model.dart';
 import 'package:flutter_calendar/models/list_sub_organization_model.dart';
 import 'package:flutter_calendar/models/login_model.dart';
 import 'package:flutter_calendar/models/type_calendar_model.dart';
@@ -86,36 +87,6 @@ class ApiProvider {
     } else {
       print('getColor request failed with status: ${response.statusCode}');
       return null;
-    }
-  }
-
-  Future<List<ListEventcalendarModel>?> getListEveneCalendar(
-      String token) async {
-    try {
-      final response = await getConnect(getListEveneCalendarAPI, token);
-      var decodedBody = utf8.decode(response.bodyBytes);
-
-      print(response.statusCode);
-
-      if (response.statusCode == statusOk) {
-        var responseData = jsonDecode(decodedBody);
-        //print(responseData); // In ra để kiểm tra cấu trúc dữ liệu
-        if (responseData is Map) {
-          if (responseData.containsKey('result')) {
-            var listData = responseData['result'];
-
-            if (listData is List) {
-              List<ListEventcalendarModel> modelList = listData
-                  .map((item) => ListEventcalendarModel.fromJson(item))
-                  .toList();
-              return modelList;
-            }
-          }
-        }
-      }
-    } catch (e) {
-      print('Error fetching personal list: $e');
-      return null; // Trả về null trong trường hợp có lỗi
     }
   }
 
@@ -232,5 +203,63 @@ class ApiProvider {
         await _fetchSubOrganizations(subOrg, token);
       }
     }
+  }
+
+  Future<List<ListEventcalendarModel>?> getListEveneCalendar(
+      String token) async {
+    try {
+      final response = await getConnect(getListEveneCalendarAPI, token);
+      var decodedBody = utf8.decode(response.bodyBytes);
+
+      print(response.statusCode);
+
+      if (response.statusCode == statusOk) {
+        var responseData = jsonDecode(decodedBody);
+        //print(responseData); // In ra để kiểm tra cấu trúc dữ liệu
+        if (responseData is Map) {
+          if (responseData.containsKey('result')) {
+            var listData = responseData['result'];
+
+            if (listData is List) {
+              List<ListEventcalendarModel> modelList = listData
+                  .map((item) => ListEventcalendarModel.fromJson(item))
+                  .toList();
+              return modelList;
+            }
+          }
+        }
+      }
+    } catch (e) {
+      print('Error fetching personal list: $e');
+      return null; // Trả về null trong trường hợp có lỗi
+    }
+  }
+
+  Future<List<ListEventResourceModel>?> getListEventResource(
+      String token) async {
+    try {
+      final response = await getConnect(getListEventResourceAPI, token);
+      var decodedBody = utf8.decode(response.bodyBytes);
+
+      if (response.statusCode == statusOk) {
+        var responseData = jsonDecode(decodedBody);
+
+        if (responseData is Map && responseData.containsKey('result')) {
+          var listData = responseData['result'];
+
+          if (listData is List) {
+            List<ListEventResourceModel> modelList = listData
+                .map((item) => ListEventResourceModel.fromJson(item))
+                .toList();
+            return modelList;
+          }
+        }
+      } else {
+        print('Error: Unexpected status code ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Error fetching event resources: $e');
+    }
+    return null; // Return null in case of an error or unexpected response
   }
 }

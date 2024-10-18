@@ -1,48 +1,30 @@
 import 'package:flutter/material.dart';
-import 'package:auto_size_text/auto_size_text.dart';
-import 'package:flutter_calendar/models/list_eventcalendar_model.dart';
-import 'package:flutter_calendar/models/login_model.dart';
-import 'package:flutter_calendar/network/api_service.dart';
 
-class TabcardItem extends StatefulWidget {
-  final String? creator;
-  final String? createdTime;
-  final String? content;
-  final String? notes;
-  final String? color;
-  final String? hosts;
-  final String? attendeesRequired;
-  final String? attendeesNoRequired;
-  final String? resources;
-  final String? attachments;
+class TabcardItem extends StatelessWidget {
+  final String date;
+  final String time;
+  final String content;
+  final String notes;
+  final String hosts;
+  final String attendeesRequired;
+  final String attendeesNoRequired;
+  final String resources;
+  final String attachments;
+  final String creator;
 
   const TabcardItem({
     Key? key,
-    this.creator,
-    this.createdTime,
-    this.content,
-    this.notes,
-    this.color,
-    this.hosts,
-    this.attendeesRequired,
-    this.attendeesNoRequired,
-    this.resources,
-    this.attachments,
+    required this.date,
+    required this.time,
+    required this.content,
+    required this.notes,
+    required this.hosts,
+    required this.attendeesRequired,
+    required this.attendeesNoRequired,
+    required this.resources,
+    required this.attachments,
+    required this.creator,
   }) : super(key: key);
-
-  @override
-  _TabcardItemState createState() => _TabcardItemState();
-}
-
-class _TabcardItemState extends State<TabcardItem>
-    with SingleTickerProviderStateMixin {
-  List<Map<String, dynamic>> _filteredDataUserorganization = [];
-  final ApiProvider _apiProvider = ApiProvider();
-
-  @override
-  void initState() {
-    super.initState();
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -71,17 +53,6 @@ class _TabcardItemState extends State<TabcardItem>
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Flexible(
-          child: AutoSizeText(
-            widget.content!, // Thay đổi từ content sang widget.content
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.bold,
-            ),
-            minFontSize: 14,
-            textAlign: TextAlign.left,
-          ),
-        ),
         _buildDateInfo(context),
         _buildErrorIndicator(),
       ],
@@ -90,11 +61,6 @@ class _TabcardItemState extends State<TabcardItem>
 
   Widget _buildErrorIndicator() {
     Color indicatorColor = Colors.green;
-    if (widget.attachments == 1) {
-      indicatorColor = Colors.yellow;
-    } else if (widget.attachments == 2) {
-      indicatorColor = Colors.red;
-    }
 
     return DecoratedBox(
       decoration: BoxDecoration(
@@ -113,6 +79,8 @@ class _TabcardItemState extends State<TabcardItem>
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         SizedBox(height: 4),
+        Text(content, style: TextStyle(fontWeight: FontWeight.bold)),
+        SizedBox(height: 4),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
@@ -123,7 +91,7 @@ class _TabcardItemState extends State<TabcardItem>
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            _buildPerson(context, widget.attendeesRequired!),
+            _buildPerson(context),
             _buildAttachment(context),
           ],
         ),
@@ -139,8 +107,8 @@ class _TabcardItemState extends State<TabcardItem>
     return Row(
       children: [
         Icon(Icons.timer_outlined, color: Colors.grey, size: iconSize),
-        Text(widget.createdTime!,
-            style: TextStyle(color: Colors.grey, fontSize: textSize)),
+        SizedBox(width: 4),
+        Text(time, style: TextStyle(fontSize: textSize)),
       ],
     );
   }
@@ -153,6 +121,8 @@ class _TabcardItemState extends State<TabcardItem>
     return Row(
       children: [
         Icon(Icons.date_range, color: Colors.grey, size: iconSize),
+        SizedBox(width: 4),
+        Text(date, style: TextStyle(fontSize: textSize)),
       ],
     );
   }
@@ -187,15 +157,14 @@ class _TabcardItemState extends State<TabcardItem>
     );
   }
 
-  Widget _buildPerson(BuildContext context, String member) {
+  Widget _buildPerson(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
     final iconSize = screenWidth * 0.03;
     final textSize = screenWidth * 0.04;
 
-    List<String> membersList = member.split(',').map((e) => e.trim()).toList();
-    int numberOfMembers = membersList.length;
+    int totalAttendees = _calculateTotalAttendees();
 
-    String displayText = numberOfMembers > 1 ? "+$numberOfMembers" : "1";
+    String displayText = totalAttendees > 0 ? "+$totalAttendees" : "0";
 
     return Row(
       children: [
@@ -209,6 +178,14 @@ class _TabcardItemState extends State<TabcardItem>
     );
   }
 
+  int _calculateTotalAttendees() {
+    int requiredAttendees =
+        attendeesRequired.split(',').where((e) => e.trim().isNotEmpty).length;
+    int nonRequiredAttendees =
+        attendeesNoRequired.split(',').where((e) => e.trim().isNotEmpty).length;
+    return requiredAttendees + nonRequiredAttendees;
+  }
+
   Widget _buildAttachment(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
     final iconSize = screenWidth * 0.03;
@@ -217,8 +194,12 @@ class _TabcardItemState extends State<TabcardItem>
     return Row(
       children: [
         Icon(Icons.file_copy_rounded, color: Colors.grey, size: iconSize),
-        Text(widget.color!,
-            style: TextStyle(color: Colors.grey, fontSize: textSize)),
+        SizedBox(width: 4),
+        Text(
+            attachments.isNotEmpty
+                ? 'Có tệp đính kèm'
+                : 'Không có tệp đính kèm',
+            style: TextStyle(fontSize: textSize)),
       ],
     );
   }
@@ -244,7 +225,9 @@ class _TabcardItemState extends State<TabcardItem>
     );
   }
 
-  void _showEditBottomSheet(BuildContext context) {}
+  void _showEditBottomSheet(BuildContext context) {
+    // Implement edit functionality
+  }
 
   void _showDetailDialog(BuildContext context) {
     showDialog(
@@ -256,16 +239,18 @@ class _TabcardItemState extends State<TabcardItem>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildDetailRow('Nội dung: ', widget.content!),
-                _buildDetailRow('Thời gian: ', widget.createdTime!),
-                _buildDetailRow('Người tạo sự kiện: ', widget.creator!),
-                _buildDetailRow('Ghi chú: ', widget.notes!),
-                _buildDetailRow('Đính kèm: ', widget.color!),
-                _buildDetailRow('Cán bộ chủ trì: ', widget.hosts!),
+                _buildDetailRow('Ngày:', date),
+                _buildDetailRow('Thời gian:', time),
+                _buildDetailRow('Nội dung:', content),
+                _buildDetailRow('Ghi chú:', notes),
+                _buildDetailRow('Chủ trì:', hosts),
                 _buildDetailRow(
-                    'Cán bộ tham dự bắt buộc: ', widget.attendeesRequired!),
-                _buildDetailRow('Địa điểm: ', widget.attendeesNoRequired!),
-                _buildDetailRow('Tài nguyên khác: ', widget.resources!),
+                    'Thành phần tham dự bắt buộc:', attendeesRequired),
+                _buildDetailRow(
+                    'Thành phần tham dự không bắt buộc:', attendeesNoRequired),
+                _buildDetailRow('Tài nguyên:', resources),
+                _buildDetailRow('Tệp đính kèm:', attachments),
+                _buildDetailRow('Người tạo:', creator),
               ],
             ),
           ),
@@ -287,6 +272,7 @@ class _TabcardItemState extends State<TabcardItem>
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(title, style: TextStyle(fontWeight: FontWeight.bold)),
+          SizedBox(width: 8),
           Expanded(
             child: Text(content, overflow: TextOverflow.visible),
           ),
@@ -306,6 +292,13 @@ class _TabcardItemState extends State<TabcardItem>
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
               child: const Text('Hủy bỏ'),
+            ),
+            TextButton(
+              onPressed: () {
+                // Implement delete functionality
+                Navigator.of(context).pop();
+              },
+              child: const Text('Xóa'),
             ),
           ],
         );

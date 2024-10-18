@@ -5,6 +5,88 @@ import 'package:flutter_calendar/network/api_service.dart';
 import 'package:intl/intl.dart';
 import 'package:file_picker/file_picker.dart'; // Import file_picker package
 
+class CustomTimePicker extends StatefulWidget {
+  final Function(TimeOfDay) onTimeSelected;
+
+  CustomTimePicker({required this.onTimeSelected});
+
+  @override
+  _CustomTimePickerState createState() => _CustomTimePickerState();
+}
+
+class _CustomTimePickerState extends State<CustomTimePicker> {
+  int _hour = TimeOfDay.now().hour;
+  int _minute = TimeOfDay.now().minute;
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: Text('Chọn giờ'),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              DropdownButton<int>(
+                value: _hour,
+                items: List.generate(12, (index) => index + 1)
+                    .map((hour) => DropdownMenuItem(
+                          value: hour,
+                          child: Text(hour.toString()),
+                        ))
+                    .toList(),
+                onChanged: (value) {
+                  setState(() {
+                    _hour = value!;
+                  });
+                },
+              ),
+              Text(':'),
+              DropdownButton<int>(
+                value: _minute,
+                items: List.generate(60, (index) => index)
+                    .map((minute) => DropdownMenuItem(
+                          value: minute,
+                          child: Text(minute.toString().padLeft(2, '0')),
+                        ))
+                    .toList(),
+                onChanged: (value) {
+                  setState(() {
+                    _minute = value!;
+                  });
+                },
+              ),
+              DropdownButton<String>(
+                value: _hour >= 12 ? 'PM' : 'AM',
+                items: ['AM', 'PM']
+                    .map((period) => DropdownMenuItem(
+                          value: period,
+                          child: Text(period),
+                        ))
+                    .toList(),
+                onChanged: (value) {
+                  // Handle AM/PM toggle if needed
+                },
+              ),
+            ],
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () {
+            widget.onTimeSelected(TimeOfDay(
+                hour: _hour % 12 + (_hour >= 12 ? 12 : 0), minute: _minute));
+            Navigator.of(context).pop();
+          },
+          child: Text('Chọn'),
+        ),
+      ],
+    );
+  }
+}
+
 // TabContentAddTask
 class TabContentAddTask extends StatefulWidget {
   @override
@@ -14,7 +96,8 @@ class TabContentAddTask extends StatefulWidget {
 class _TabContentAddTaskState extends State<TabContentAddTask>
     with AutomaticKeepAliveClientMixin {
   TextEditingController _dateController = TextEditingController();
-  TextEditingController _timeController = TextEditingController();
+  TextEditingController _timeStartController = TextEditingController();
+  TextEditingController _timeEndController = TextEditingController();
   TextEditingController _contentController = TextEditingController();
   TextEditingController _noteController = TextEditingController();
   String _selectedPeriod = 'Chiều';
@@ -129,23 +212,52 @@ class _TabContentAddTaskState extends State<TabContentAddTask>
               ),
               SizedBox(height: 10),
               TextFormField(
-                controller: _timeController,
+                controller: _timeStartController,
                 readOnly: true, // Ngăn bàn phím xuất hiện
                 decoration: InputDecoration(
-                  labelText: 'Giờ',
+                  labelText: 'Giờ bắt đầu',
                   prefixIcon: Icon(Icons.access_time),
                   border: OutlineInputBorder(),
                 ),
                 onTap: () async {
-                  TimeOfDay? pickedTime = await showTimePicker(
+                  showDialog(
                     context: context,
-                    initialTime: TimeOfDay.now(),
+                    builder: (context) {
+                      return CustomTimePicker(
+                        onTimeSelected: (TimeOfDay selectedTime) {
+                          setState(() {
+                            _timeStartController.text =
+                                selectedTime.format(context);
+                          });
+                        },
+                      );
+                    },
                   );
-                  if (pickedTime != null) {
-                    setState(() {
-                      _timeController.text = pickedTime.format(context);
-                    });
-                  }
+                },
+              ),
+              SizedBox(height: 10),
+              TextFormField(
+                controller: _timeEndController,
+                readOnly: true, // Ngăn bàn phím xuất hiện
+                decoration: InputDecoration(
+                  labelText: 'Giờ kết thúc',
+                  prefixIcon: Icon(Icons.access_time),
+                  border: OutlineInputBorder(),
+                ),
+                onTap: () async {
+                  showDialog(
+                    context: context,
+                    builder: (context) {
+                      return CustomTimePicker(
+                        onTimeSelected: (TimeOfDay selectedTime) {
+                          setState(() {
+                            _timeEndController.text =
+                                selectedTime.format(context);
+                          });
+                        },
+                      );
+                    },
+                  );
                 },
               ),
               SizedBox(height: 10),

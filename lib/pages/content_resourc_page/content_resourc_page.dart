@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_calendar/models/list_event_resource_model.dart';
+import 'package:flutter_calendar/models/login_model.dart';
+import 'package:flutter_calendar/network/api_service.dart';
 
 class TabContentResource extends StatefulWidget {
   @override
@@ -9,17 +12,30 @@ class _TabContentResourceState extends State<TabContentResource>
     with AutomaticKeepAliveClientMixin {
   String? _selectedResource;
   List<Map<String, String>> _filteredDataListResource = [];
-  final List<Map<String, String>> dataListResource = [
-    {'resource': 'Cà phê'},
-    {'resource': 'Trái cây'},
-    {'resource': 'Trà sữa'},
-    // Thêm các phần tử khác...
-  ];
+  final ApiProvider _apiProvider = ApiProvider();
 
   @override
   void initState() {
     super.initState();
-    _filteredDataListResource = dataListResource;
+    ListEventResource();
+  }
+
+  Future<void> ListEventResource() async {
+    List<ListEventResourceModel>? ListEvent =
+        await _apiProvider.getListEventResource(User.token.toString());
+
+    if (ListEvent != null) {
+      setState(() {
+        _filteredDataListResource = ListEvent.where(
+                (item) => item.group == 1) // Filter items where group == 0
+            .map((item) {
+          return {
+            'name': item.name ?? '',
+            'description': item.description ?? '',
+          };
+        }).toList();
+      });
+    }
   }
 
   @override
@@ -40,14 +56,14 @@ class _TabContentResourceState extends State<TabContentResource>
                   itemCount: _filteredDataListResource.length,
                   itemBuilder: (context, index) {
                     final data = _filteredDataListResource[index];
-                    final isSelected = data['resource'] == _selectedResource;
+                    final isSelected = data['name'] == _selectedResource;
 
                     return Container(
                       decoration: BoxDecoration(
                         border: Border(
                           bottom: BorderSide(
-                            color: Colors.grey, // Màu xám cho viền dưới
-                            width: 1.0, // Độ dày của viền
+                            color: Colors.grey,
+                            width: 1.0,
                           ),
                         ),
                       ),
@@ -59,15 +75,15 @@ class _TabContentResourceState extends State<TabContentResource>
                           children: [
                             Expanded(
                               child: Text(
-                                data['resource'] ?? '',
+                                '${data['name']} - ${data['description']}',
                                 style: TextStyle(fontSize: 16),
                               ),
                             ),
                             IconButton(
                               onPressed: () {},
                               icon: Icon(
-                                Icons.edit, // Biểu tượng xóa
-                                color: Colors.blue, // Màu của biểu tượng
+                                Icons.edit,
+                                color: Colors.blue,
                               ),
                             ),
                             IconButton(
@@ -76,13 +92,13 @@ class _TabContentResourceState extends State<TabContentResource>
                                   if (isSelected) {
                                     _selectedResource = null;
                                   } else {
-                                    _selectedResource = data['resource'];
+                                    _selectedResource = data['description'];
                                   }
                                 });
                               },
                               icon: Icon(
-                                Icons.delete, // Biểu tượng xóa
-                                color: Colors.red, // Màu của biểu tượng
+                                Icons.delete,
+                                color: Colors.red,
                               ),
                             ),
                           ],
@@ -99,20 +115,19 @@ class _TabContentResourceState extends State<TabContentResource>
           padding: const EdgeInsets.fromLTRB(0, 0, 0, 5),
           child: Align(
             alignment: Alignment.bottomCenter,
-            // Căn giữa theo chiều ngang, nhưng ở phía dưới cùng
             child: ElevatedButton(
               onPressed: () {
-                // Xử lý khi nhấn nút "Thêm"
+                // Handle add button press
               },
               style: ElevatedButton.styleFrom(
                 padding: EdgeInsets.all(15),
-                shape: CircleBorder(), // Đặt hình dạng nút thành hình tròn
-                backgroundColor: Colors.blue, // Màu nền của nút
+                shape: CircleBorder(),
+                backgroundColor: Colors.blue,
               ),
               child: Icon(
-                Icons.add, // Icon dấu cộng
-                color: Colors.white, // Màu của biểu tượng
-                size: 30, // Kích thước của biểu tượng
+                Icons.add,
+                color: Colors.white,
+                size: 30,
               ),
             ),
           ),

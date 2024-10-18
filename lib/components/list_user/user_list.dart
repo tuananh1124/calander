@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_calendar/models/list_root_organization_model.dart';
 import 'package:flutter_calendar/models/login_model.dart';
-import 'package:flutter_calendar/models/organization_node.dart';
+import 'package:flutter_calendar/models/organization_model.dart';
 import 'package:flutter_calendar/models/user_organization_model.dart';
 import 'package:flutter_calendar/network/api_service.dart';
 

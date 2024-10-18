@@ -7,8 +7,6 @@ const String getTypeAPI = '$serverURL/website/event-calendar/get-types';
 const String getUserOrganizationAPI =
     '$serverURL/website/user-organization/search?keyword=&scope=user';
 
-// const String getListOfPersonalAPI = '$serverURL/website/event-calendar/list-of-personal';
-
 const String getListEveneCalendarAPI =
     '$serverURL/website/event-calendar?organizationId=605b064ad9b8222a8db47eb8'; // theo id VĂN PHÒNG TRUNG ƯƠNG ĐẢNG
 
@@ -17,6 +15,9 @@ const String getListSubSearchOrganizationAPI =
 
 const String getListRootOrganizationAPI =
     '$serverURL/website/organization/list-root-organizations?childLevel=10';
+
+const String getListEventResourceAPI =
+    '$serverURL/website/event-resource?organizationId=605b064ad9b8222a8db47eb8';
 
 const int statusOk = 200;
 const int statusCreated = 201;

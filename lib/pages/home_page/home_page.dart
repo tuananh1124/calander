@@ -22,14 +22,12 @@ class _HomePageState extends State<HomePage>
       DateFormat('EEEE').format(DateTime.now()); // Lưu trữ thứ trong tuần
   String _selectedMonth =
       DateFormat('MMMM').format(DateTime.now()); // Lưu trữ tên tháng hiện tại
-
   DateTime _currentDate = DateTime.now();
   bool _hasChangedWeek = false;
   bool _hasChangedMonth = false;
   late DateBloc _dateBloc;
   late MonthBloc _monthBloc;
   String _selectedFilter = 'Theo tuần';
-  // Giá trị mặc định
   int morningCount = 0;
   int afternoonCount = 0;
 
@@ -41,6 +39,7 @@ class _HomePageState extends State<HomePage>
     _monthBloc = MonthBloc();
     _dateBloc.add(LoadData(_currentDate));
     _monthBloc.add(LoadDataToMonth(_currentDate));
+    _fetchEventCounts();
     //context.read<MonthBloc>().add(LoadDataToMonth(DateTime.now()));
   }
 
@@ -50,6 +49,10 @@ class _HomePageState extends State<HomePage>
     _dateBloc.close(); // Đóng Bloc khi không còn sử dụng
     _monthBloc.close();
     super.dispose();
+  }
+
+  Future<void> _fetchEventCounts() async {
+    setState(() {});
   }
 
   @override
@@ -206,6 +209,7 @@ class _HomePageState extends State<HomePage>
       _updateSelectedMonthAndDayOfWeek(newDate);
       _dateBloc.add(LoadData(newDate));
       _monthBloc.add(LoadDataToMonth(newDate));
+      _fetchEventCounts();
     });
   }
 
@@ -295,6 +299,7 @@ class _HomePageState extends State<HomePage>
       _updateSelectedMonthAndDayOfWeek(_currentDate);
       _dateBloc.add(LoadData(_currentDate));
       _hasChangedWeek = true;
+      _fetchEventCounts();
     });
   }
 
@@ -304,6 +309,7 @@ class _HomePageState extends State<HomePage>
       _updateSelectedMonthAndDayOfWeek(_currentDate);
       _dateBloc.add(LoadData(_currentDate));
       _hasChangedWeek = false;
+      _fetchEventCounts();
     });
   }
 
@@ -323,6 +329,7 @@ class _HomePageState extends State<HomePage>
       _updateSelectedMonthAndDayOfWeek(_currentDate);
       _monthBloc.add(LoadDataToMonth(_currentDate));
       _hasChangedMonth = true;
+      _fetchEventCounts();
     });
   }
 
@@ -333,6 +340,7 @@ class _HomePageState extends State<HomePage>
       _updateSelectedMonthAndDayOfWeek(_currentDate);
       _monthBloc.add(LoadDataToMonth(_currentDate));
       _hasChangedMonth = false; // Đặt trạng thái trở về
+      _fetchEventCounts();
     });
   }
 
@@ -574,11 +582,19 @@ class _HomePageState extends State<HomePage>
 
   Widget _buildTabBarView() {
     return TabBarView(
-      controller:
-          _tabController, // Ensure you have initialized this controller properly
+      controller: _tabController,
       children: [
-        TabcardList(),
-        TabcardList(),
+        TabcardList(
+          isMorning: true,
+          onEventCountChanged: (count) => setState(() => morningCount = count),
+          selectedDate: _currentDate,
+        ),
+        TabcardList(
+          isMorning: false,
+          onEventCountChanged: (count) =>
+              setState(() => afternoonCount = count),
+          selectedDate: _currentDate,
+        ),
       ],
     );
   }
