@@ -115,7 +115,7 @@ class _TabcardListState extends State<TabcardList>
               attendeesNoRequired: _formatAttendees(event.attendeesNoRequired),
               resources: event.resources?.join(', ') ?? '',
               attachments: event.attachments?.join(', ') ?? '',
-              creator: event.creator?.textDisplay ?? '',
+              creator: event.creator?.fullName ?? '',
             ),
           ],
         );

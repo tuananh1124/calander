@@ -100,7 +100,6 @@ class Creator {
   final String? organizationId;
   final String? organizationName;
   final String? type;
-  final String? textDisplay;
 
   Creator({
     this.userId,
@@ -108,7 +107,6 @@ class Creator {
     this.organizationId,
     this.organizationName,
     this.type,
-    this.textDisplay,
   });
 
   factory Creator.fromJson(Map<String, dynamic> json) {
@@ -118,7 +116,6 @@ class Creator {
       organizationId: json['organizationId'],
       organizationName: json['organizationName'],
       type: json['type'],
-      textDisplay: json['textDisplay'],
     );
   }
 }

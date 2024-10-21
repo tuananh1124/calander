@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_calendar/models/list_event_resource_model.dart';
+import 'package:flutter_calendar/models/login_model.dart';
+import 'package:flutter_calendar/network/api_service.dart';
 
 class LocationList extends StatefulWidget {
   final Function(String location) onItemSelectedLocation;
+
   LocationList({required this.onItemSelectedLocation});
 
   @override
@@ -9,13 +13,8 @@ class LocationList extends StatefulWidget {
 }
 
 class _LocationListState extends State<LocationList> {
-  final List<Map<String, String>> dataListLocation = [
-    {'location': '37 Bình Thạnh'},
-    {'location': '36 Gò Vấp'},
-    {'location': '38 Phú Nhuận'},
-    // Thêm các phần tử khác...
-  ];
-
+  final List<Map<String, String>> dataListLocation = [];
+  final ApiProvider _apiProvider = ApiProvider();
   String? _selectedLocation;
   List<Map<String, String>> _filteredDataListLocation = [];
   final TextEditingController _searchController = TextEditingController();
@@ -25,6 +24,24 @@ class _LocationListState extends State<LocationList> {
     super.initState();
     _filteredDataListLocation = dataListLocation;
     _searchController.addListener(_filterLocation);
+    _fetchResourceData(); // Fetch data when the widget initializes
+  }
+
+  Future<void> _fetchResourceData() async {
+    List<ListEventResourceModel>? listEvent =
+        await _apiProvider.getListEventResource(User.token.toString());
+
+    if (listEvent != null) {
+      setState(() {
+        _filteredDataListLocation =
+            listEvent.where((item) => item.group == 0).map((item) {
+          return {
+            'location': item.name ?? '', // Ensure the key matches
+            'description': item.description ?? '',
+          };
+        }).toList();
+      });
+    }
   }
 
   @override
@@ -108,7 +125,7 @@ class _LocationListState extends State<LocationList> {
             onPressed: () {
               setState(() {
                 if (isSelected) {
-                  _selectedLocation = null;
+                  _selectedLocation = null; // Deselect if already selected
                 } else {
                   _selectedLocation = data['location'];
                   widget.onItemSelectedLocation(data['location'] ?? '');

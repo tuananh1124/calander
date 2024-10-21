@@ -244,10 +244,9 @@ class TabcardItem extends StatelessWidget {
                 _buildDetailRow('Nội dung:', content),
                 _buildDetailRow('Ghi chú:', notes),
                 _buildDetailRow('Chủ trì:', hosts),
+                _buildDetailRow('Người tham dự bắt buộc:', attendeesRequired),
                 _buildDetailRow(
-                    'Thành phần tham dự bắt buộc:', attendeesRequired),
-                _buildDetailRow(
-                    'Thành phần tham dự không bắt buộc:', attendeesNoRequired),
+                    'Người tham dự không bắt buộc:', attendeesNoRequired),
                 _buildDetailRow('Tài nguyên:', resources),
                 _buildDetailRow('Tệp đính kèm:', attachments),
                 _buildDetailRow('Người tạo:', creator),

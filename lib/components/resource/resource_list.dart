@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_calendar/models/list_event_resource_model.dart';
+import 'package:flutter_calendar/models/login_model.dart';
+import 'package:flutter_calendar/network/api_service.dart';
 
 class ResourceList extends StatefulWidget {
   final Function(String resource) onItemSelectedResource;
+
   ResourceList({required this.onItemSelectedResource});
 
   @override
@@ -9,25 +13,36 @@ class ResourceList extends StatefulWidget {
 }
 
 class _ResourceListState extends State<ResourceList> {
-  final List<Map<String, dynamic>> dataListResource = [
-    {'resource': 'Cà phê', 'group': 'Nhóm A'},
-    {'resource': 'Trái cây', 'group': 'Nhóm A'},
-    {'resource': 'Trà sữa', 'group': 'Nhóm B'},
-    {'resource': 'Nước ngọt', 'group': 'Nhóm B'},
-    // Thêm các phần tử khác...
-  ];
-
+  final List<Map<String, String>> dataListResource = [];
   String? _selectedGroup;
   String? _selectedResource;
-  List<Map<String, dynamic>> _filteredDataListResource = [];
+  List<Map<String, String>> _filteredDataListResource = [];
   final TextEditingController _searchController = TextEditingController();
+  final ApiProvider _apiProvider = ApiProvider();
 
   @override
   void initState() {
     super.initState();
     _filteredDataListResource = dataListResource;
-
     _searchController.addListener(_filterResource);
+    _fetchResourceData(); // Fetch data when the widget initializes
+  }
+
+  Future<void> _fetchResourceData() async {
+    List<ListEventResourceModel>? listEvent =
+        await _apiProvider.getListEventResource(User.token.toString());
+
+    if (listEvent != null) {
+      setState(() {
+        _filteredDataListResource =
+            listEvent.where((item) => item.group == 1).map((item) {
+          return {
+            'resource': item.name ?? '',
+            'description': item.description ?? '',
+          };
+        }).toList();
+      });
+    }
   }
 
   @override

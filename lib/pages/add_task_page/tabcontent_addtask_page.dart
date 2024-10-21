@@ -4,19 +4,44 @@ import 'package:flutter_calendar/models/login_model.dart';
 import 'package:flutter_calendar/network/api_service.dart';
 import 'package:intl/intl.dart';
 import 'package:file_picker/file_picker.dart'; // Import file_picker package
+import 'package:flutter/material.dart';
 
 class CustomTimePicker extends StatefulWidget {
   final Function(TimeOfDay) onTimeSelected;
+  final TimeOfDay initialTime;
 
-  CustomTimePicker({required this.onTimeSelected});
+  CustomTimePicker({required this.onTimeSelected, required this.initialTime});
 
   @override
   _CustomTimePickerState createState() => _CustomTimePickerState();
 }
 
 class _CustomTimePickerState extends State<CustomTimePicker> {
-  int _hour = TimeOfDay.now().hour;
-  int _minute = TimeOfDay.now().minute;
+  late int _hour;
+  late int _minute;
+  late String _period;
+
+  final List<int> _validMinutes = List.generate(12, (index) => index * 5);
+
+  @override
+  void initState() {
+    super.initState();
+    _hour = widget.initialTime.hour;
+    _minute = _validMinutes.contains(widget.initialTime.minute)
+        ? widget.initialTime.minute
+        : _validMinutes.reduce((curr, next) =>
+            (next - widget.initialTime.minute).abs() <
+                    (curr - widget.initialTime.minute).abs()
+                ? next
+                : curr);
+    _updatePeriod();
+  }
+
+  void _updatePeriod() {
+    _period = _hour < 12 ? 'AM' : 'PM';
+    _hour = _hour % 12;
+    if (_hour == 0) _hour = 12;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -39,13 +64,16 @@ class _CustomTimePickerState extends State<CustomTimePicker> {
                 onChanged: (value) {
                   setState(() {
                     _hour = value!;
+                    if (_hour == 12) {
+                      _period = _period == 'AM' ? 'PM' : 'AM';
+                    }
                   });
                 },
               ),
               Text(':'),
               DropdownButton<int>(
                 value: _minute,
-                items: List.generate(60, (index) => index)
+                items: _validMinutes
                     .map((minute) => DropdownMenuItem(
                           value: minute,
                           child: Text(minute.toString().padLeft(2, '0')),
@@ -58,7 +86,7 @@ class _CustomTimePickerState extends State<CustomTimePicker> {
                 },
               ),
               DropdownButton<String>(
-                value: _hour >= 12 ? 'PM' : 'AM',
+                value: _period,
                 items: ['AM', 'PM']
                     .map((period) => DropdownMenuItem(
                           value: period,
@@ -66,7 +94,12 @@ class _CustomTimePickerState extends State<CustomTimePicker> {
                         ))
                     .toList(),
                 onChanged: (value) {
-                  // Handle AM/PM toggle if needed
+                  setState(() {
+                    _period = value!;
+                    if (_hour == 12) {
+                      _hour = _hour % 12;
+                    }
+                  });
                 },
               ),
             ],
@@ -76,8 +109,9 @@ class _CustomTimePickerState extends State<CustomTimePicker> {
       actions: [
         TextButton(
           onPressed: () {
-            widget.onTimeSelected(TimeOfDay(
-                hour: _hour % 12 + (_hour >= 12 ? 12 : 0), minute: _minute));
+            int finalHour = _hour % 12 + (_period == 'PM' ? 12 : 0);
+            if (finalHour == 24) finalHour = 0;
+            widget.onTimeSelected(TimeOfDay(hour: finalHour, minute: _minute));
             Navigator.of(context).pop();
           },
           child: Text('Chọn'),
@@ -102,19 +136,16 @@ class _TabContentAddTaskState extends State<TabContentAddTask>
   TextEditingController _noteController = TextEditingController();
   String _selectedPeriod = 'Chiều';
   String? _selectedColor;
-  String? _selectedFile; // Biến lưu tên tệp đã chọn
+  String? _selectedFile; // Variable to store selected file name
   final ApiProvider _apiProvider = ApiProvider();
   ColorModel?
-      colorModelList; // Sửa đổi từ 'late' thành nullable để tránh lỗi khi dữ liệu chưa được tải
+      colorModelList; // Nullable to avoid errors when data is not loaded
 
   @override
   void initState() {
     super.initState();
     colorsAPI();
   }
-
-  @override
-  bool get wantKeepAlive => true;
 
   Future<void> colorsAPI() async {
     ColorModel? fetchedColorModel =
@@ -131,7 +162,7 @@ class _TabContentAddTaskState extends State<TabContentAddTask>
       PlatformFile file = result.files.first;
 
       setState(() {
-        _selectedFile = file.name; // Lưu tên tệp đã chọn
+        _selectedFile = file.name; // Store the selected file name
       });
 
       print('File selected: ${file.name}');
@@ -152,13 +183,15 @@ class _TabContentAddTaskState extends State<TabContentAddTask>
   }
 
   @override
+  bool get wantKeepAlive => true;
+
+  @override
   Widget build(BuildContext context) {
     super.build(context);
     return SingleChildScrollView(
       child: GestureDetector(
         onTap: () {
-          FocusScope.of(context)
-              .unfocus(); // Tắt bàn phím khi bấm vào khoảng trắng
+          FocusScope.of(context).unfocus(); // Dismiss keyboard on tap
         },
         child: Padding(
           padding: const EdgeInsets.all(10.0),
@@ -167,7 +200,7 @@ class _TabContentAddTaskState extends State<TabContentAddTask>
               SizedBox(height: 10),
               TextFormField(
                 controller: _dateController,
-                readOnly: true, // Ngăn bàn phím xuất hiện
+                readOnly: true, // Prevent keyboard from appearing
                 decoration: InputDecoration(
                   labelText: 'Ngày',
                   prefixIcon: Icon(Icons.calendar_today),
@@ -213,7 +246,7 @@ class _TabContentAddTaskState extends State<TabContentAddTask>
               SizedBox(height: 10),
               TextFormField(
                 controller: _timeStartController,
-                readOnly: true, // Ngăn bàn phím xuất hiện
+                readOnly: true, // Prevent keyboard from appearing
                 decoration: InputDecoration(
                   labelText: 'Giờ bắt đầu',
                   prefixIcon: Icon(Icons.access_time),
@@ -224,6 +257,7 @@ class _TabContentAddTaskState extends State<TabContentAddTask>
                     context: context,
                     builder: (context) {
                       return CustomTimePicker(
+                        initialTime: TimeOfDay.now(), // Pass current time
                         onTimeSelected: (TimeOfDay selectedTime) {
                           setState(() {
                             _timeStartController.text =
@@ -238,7 +272,7 @@ class _TabContentAddTaskState extends State<TabContentAddTask>
               SizedBox(height: 10),
               TextFormField(
                 controller: _timeEndController,
-                readOnly: true, // Ngăn bàn phím xuất hiện
+                readOnly: true, // Prevent keyboard from appearing
                 decoration: InputDecoration(
                   labelText: 'Giờ kết thúc',
                   prefixIcon: Icon(Icons.access_time),
@@ -249,6 +283,7 @@ class _TabContentAddTaskState extends State<TabContentAddTask>
                     context: context,
                     builder: (context) {
                       return CustomTimePicker(
+                        initialTime: TimeOfDay.now(), // Pass current time
                         onTimeSelected: (TimeOfDay selectedTime) {
                           setState(() {
                             _timeEndController.text =
@@ -281,38 +316,47 @@ class _TabContentAddTaskState extends State<TabContentAddTask>
               Row(
                 children: [
                   Text('Màu sắc:'),
-                  if (colorModelList != null) ...[
-                    ...List.generate(
-                      getColorsFromModel(colorModelList!).length,
-                      (index) {
-                        final colorHex =
-                            getColorsFromModel(colorModelList!)[index];
-                        return Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 1.0),
-                          child: ElevatedButton(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Color(
-                                int.parse(colorHex.replaceAll('#', '0xff')),
-                              ), // Chuyển đổi mã màu hex thành Color
-                              shape: CircleBorder(
-                                // Đường viền hình tròn
-                                side: BorderSide(),
-                              ),
+                  Expanded(
+                    child: SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
+                        children: [
+                          if (colorModelList != null) ...[
+                            ...List.generate(
+                              getColorsFromModel(colorModelList!).length,
+                              (index) {
+                                final colorHex =
+                                    getColorsFromModel(colorModelList!)[index];
+                                return Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 1.0),
+                                  child: ElevatedButton(
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: Color(
+                                        int.parse(
+                                            colorHex.replaceAll('#', '0xff')),
+                                      ),
+                                      shape: CircleBorder(
+                                        side: BorderSide(),
+                                      ),
+                                    ),
+                                    onPressed: () {
+                                      setState(() {
+                                        _selectedColor = colorHex;
+                                      });
+                                    },
+                                    child: null,
+                                  ),
+                                );
+                              },
                             ),
-                            onPressed: () {
-                              setState(() {
-                                _selectedColor = colorHex;
-                              });
-                            },
-                            child: null,
-                          ),
-                        );
-                      },
+                          ] else ...[
+                            SizedBox.shrink(),
+                          ],
+                        ],
+                      ),
                     ),
-                  ] else ...[
-                    SizedBox
-                        .shrink(), // Khi không có dữ liệu, không hiển thị gì
-                  ],
+                  ),
                 ],
               ),
               SizedBox(height: 10),
@@ -320,7 +364,7 @@ class _TabContentAddTaskState extends State<TabContentAddTask>
                 children: [
                   Expanded(
                     child: ElevatedButton(
-                      onPressed: _pickFile, // Chọn tệp khi nhấn vào nút
+                      onPressed: _pickFile, // Choose file on button press
                       child: Text(
                         'Chọn tệp',
                         style: TextStyle(color: Colors.black),
