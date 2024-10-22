@@ -17,9 +17,7 @@ class _UserListCardState extends State<UserListCard>
   late AnimationController _controller;
   late Animation<double> _animation;
   bool _isExpanded = false;
-  String _selectedName = '';
-  String _selectedPosition = '';
-  String _selectedStatus = '';
+
   List<Map<String, String>> _items = []; // Danh sách các mục
 
   @override
@@ -52,19 +50,6 @@ class _UserListCardState extends State<UserListCard>
     });
   }
 
-  void _onItemSelected(String name, String position, String status) {
-    setState(() {
-      _selectedName = name;
-      _selectedPosition = position;
-      _selectedStatus = status;
-      _items.add({
-        'name': name,
-        'position': position,
-        'status': status,
-      }); // Thêm mục mới vào danh sách
-    });
-  }
-
   // Hàm để hiển thị danh sách chi tiết
   void _showDetailsDialog(BuildContext context) {
     showDialog(
@@ -86,7 +71,7 @@ class _UserListCardState extends State<UserListCard>
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              '${item['name']} - ${item['position']} - ${item['status']}',
+                              '${item['fullName']} }',
                               style: TextStyle(
                                   fontSize: 14), // Giảm kích thước chữ
                             ),
@@ -193,9 +178,7 @@ class _UserListCardState extends State<UserListCard>
                                       // Hiển thị tối đa 3 mục
                                       ..._items.take(3).map((item) =>
                                           buildDetailRow(
-                                              item['name'] ?? '',
-                                              item['position'] ?? '',
-                                              item['status'] ?? '')),
+                                              item['fullName'] ?? '')),
 
                                       // Nếu danh sách có nhiều hơn 3 mục, hiển thị thông báo số mục còn lại
                                       if (_items.length > 3)
@@ -337,12 +320,12 @@ class _UserListCardState extends State<UserListCard>
     );
   }
 
-  Widget buildDetailRow(String name, String position, String status) {
+  Widget buildDetailRow(String fullName) {
     return Row(
       children: [
         Expanded(
           child: Text(
-            '$name - $position - $status', // Kết hợp tên và chức vụ vào một dòng
+            '$fullName', // Kết hợp tên và chức vụ vào một dòng
             overflow: TextOverflow.ellipsis,
             style: TextStyle(fontSize: 16),
           ),
