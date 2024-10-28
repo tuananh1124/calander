@@ -37,6 +37,7 @@ class _ResourceListState extends State<ResourceList> {
         _filteredDataListResource =
             listEvent.where((item) => item.group == 1).map((item) {
           return {
+            'id': item.id ?? '',
             'resource': item.name ?? '',
             'description': item.description ?? '',
           };

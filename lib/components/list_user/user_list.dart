@@ -6,6 +6,10 @@ import 'package:flutter_calendar/models/user_organization_model.dart';
 import 'package:flutter_calendar/network/api_service.dart';
 
 class MyList extends StatefulWidget {
+  final Function(List<Map<String, String>>) onEmployeesSelected;
+
+  const MyList({Key? key, required this.onEmployeesSelected}) : super(key: key);
+
   @override
   _MyListState createState() => _MyListState();
 }
@@ -282,6 +286,25 @@ class _MyListState extends State<MyList> with SingleTickerProviderStateMixin {
     super.dispose();
   }
 
+  List<Map<String, String>> _getSelectedEmployees() {
+    List<Map<String, String>> selectedEmployees = [];
+    _selectedEmployees.forEach((orgId, employees) {
+      employees.forEach((employeeId, isSelected) {
+        if (isSelected) {
+          var org = _findOrganizationById(orgId);
+          var employee = org?.users.firstWhere((e) => e['id'] == employeeId);
+          if (employee != null) {
+            selectedEmployees.add({
+              'fullName': employee['fullName'] ?? '',
+              'jobTitle': employee['jobTitle'] ?? '',
+            });
+          }
+        }
+      });
+    });
+    return selectedEmployees;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -291,6 +314,9 @@ class _MyListState extends State<MyList> with SingleTickerProviderStateMixin {
           icon: Icon(Icons.arrow_back_ios_new_outlined,
               color: Colors.white, size: 16),
           onPressed: () {
+            List<Map<String, String>> selectedEmployees =
+                _getSelectedEmployees();
+            widget.onEmployeesSelected(selectedEmployees);
             Navigator.of(context).pop();
           },
         ),

@@ -19,6 +19,7 @@ class _UserListCardState extends State<UserListCard>
   bool _isExpanded = false;
 
   List<Map<String, String>> _items = []; // Danh sách các mục
+  List<Map<String, String>> _selectedEmployees = [];
 
   @override
   void initState() {
@@ -50,6 +51,21 @@ class _UserListCardState extends State<UserListCard>
     });
   }
 
+  void _showMyList() {
+    Navigator.of(context).push(
+      SlideFromRightPageRoute(
+        page: MyList(
+          onEmployeesSelected: (employees) {
+            setState(() {
+              _selectedEmployees = employees;
+              _items = employees; // Update _items with selected employees
+            });
+          },
+        ),
+      ),
+    );
+  }
+
   // Hàm để hiển thị danh sách chi tiết
   void _showDetailsDialog(BuildContext context) {
     showDialog(
@@ -71,7 +87,7 @@ class _UserListCardState extends State<UserListCard>
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              '${item['fullName']} }',
+                              '${item['fullName']} ',
                               style: TextStyle(
                                   fontSize: 14), // Giảm kích thước chữ
                             ),
@@ -168,20 +184,17 @@ class _UserListCardState extends State<UserListCard>
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     // Hiển thị danh sách các mục hoặc thông báo không có người tham dự
-                                    if (_items.isEmpty)
+                                    if (_selectedEmployees.isEmpty)
                                       Text(
                                         'Không có người tham dự',
                                         style: TextStyle(
                                             fontSize: 16, color: Colors.grey),
                                       )
                                     else ...[
-                                      // Hiển thị tối đa 3 mục
-                                      ..._items.take(3).map((item) =>
-                                          buildDetailRow(
-                                              item['fullName'] ?? '')),
-
-                                      // Nếu danh sách có nhiều hơn 3 mục, hiển thị thông báo số mục còn lại
-                                      if (_items.length > 3)
+                                      ..._selectedEmployees.take(3).map(
+                                          (employee) => buildDetailRow(
+                                              employee['fullName'] ?? '')),
+                                      if (_selectedEmployees.length > 3)
                                         Padding(
                                           padding:
                                               const EdgeInsets.only(top: 8.0),
@@ -194,7 +207,7 @@ class _UserListCardState extends State<UserListCard>
                                                   BorderRadius.circular(20),
                                             ),
                                             child: Text(
-                                              '${_items.length - 3}+',
+                                              '${_selectedEmployees.length - 3}+',
                                               style: TextStyle(
                                                   color: Colors.black,
                                                   fontSize: 14),
@@ -216,13 +229,8 @@ class _UserListCardState extends State<UserListCard>
                                             child: InkWell(
                                               borderRadius:
                                                   BorderRadius.circular(10),
-                                              onTap: () {
-                                                Navigator.of(context).push(
-                                                  SlideFromRightPageRoute(
-                                                    page: MyList(),
-                                                  ),
-                                                );
-                                              },
+                                              onTap:
+                                                  _showMyList, // Use the new method here
                                               child: const Padding(
                                                 padding: EdgeInsets.symmetric(
                                                     horizontal: 12,
@@ -231,16 +239,13 @@ class _UserListCardState extends State<UserListCard>
                                                   mainAxisSize:
                                                       MainAxisSize.min,
                                                   children: [
-                                                    Icon(
-                                                      Icons.add,
-                                                      color: Colors.white,
-                                                      size: 15,
-                                                    ),
-                                                    Text(
-                                                      'Thêm',
-                                                      style: TextStyle(
-                                                          color: Colors.white),
-                                                    ),
+                                                    Icon(Icons.add,
+                                                        color: Colors.white,
+                                                        size: 15),
+                                                    Text('Thêm',
+                                                        style: TextStyle(
+                                                            color:
+                                                                Colors.white)),
                                                   ],
                                                 ),
                                               ),
@@ -325,7 +330,7 @@ class _UserListCardState extends State<UserListCard>
       children: [
         Expanded(
           child: Text(
-            '$fullName', // Kết hợp tên và chức vụ vào một dòng
+            '$fullName',
             overflow: TextOverflow.ellipsis,
             style: TextStyle(fontSize: 16),
           ),

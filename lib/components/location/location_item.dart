@@ -17,7 +17,7 @@ class _LocationItemState extends State<LocationItem>
   late Animation<double> _animation;
   bool _isExpanded = false;
 
-  String _selectedLocation = '';
+  Map<String, String> _selectedLocation = {};
   List<Map<String, String>> _itemsLocation = [];
 
   @override
@@ -50,52 +50,11 @@ class _LocationItemState extends State<LocationItem>
     });
   }
 
-  void _onItemSelectedLocation(String location) async {
-    if (_selectedLocation.isNotEmpty) {
-      bool? confirmChange = await _showConfirmationDialog();
-      if (confirmChange == true) {
-        setState(() {
-          // Clear all existing locations and add the new one
-          _itemsLocation.clear();
-          _itemsLocation.add({'location': location});
-          _selectedLocation = location;
-        });
-      }
-    } else {
-      setState(() {
-        // Add the new location
-        _itemsLocation.clear();
-        _itemsLocation.add({'location': location});
-        _selectedLocation = location;
-      });
-    }
-  }
-
-  Future<bool?> _showConfirmationDialog() {
-    return showDialog<bool>(
-      context: context,
-      barrierDismissible: false,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text('Xác nhận đổi địa chỉ'),
-          content: Text('Bạn có muốn đổi địa chỉ không?'),
-          actions: <Widget>[
-            TextButton(
-              child: Text('Hủy'),
-              onPressed: () {
-                Navigator.of(context).pop(false);
-              },
-            ),
-            TextButton(
-              child: Text('Đồng ý'),
-              onPressed: () {
-                Navigator.of(context).pop(true);
-              },
-            ),
-          ],
-        );
-      },
-    );
+  void _onItemSelectedLocation(Map<String, String> locationData) {
+    setState(() {
+      _selectedLocation = locationData;
+      _itemsLocation = [locationData]; // Cập nhật danh sách với địa điểm mới
+    });
   }
 
   @override
@@ -172,37 +131,39 @@ class _LocationItemState extends State<LocationItem>
                                   children: [
                                     if (_itemsLocation.isEmpty)
                                       Text(
-                                        'Không có địa điểm',
+                                        'Chưa chọn địa điểm',
                                         style: TextStyle(
-                                            fontSize: 16, color: Colors.grey),
-                                      )
-                                    else ...[
-                                      ..._itemsLocation
-                                          .take(2)
-                                          .map((item) => buildDetailRow(
-                                              item['location'] ?? ''))
-                                          .toList(),
-                                      if (_itemsLocation.length > 2)
-                                        Padding(
-                                          padding:
-                                              const EdgeInsets.only(top: 8.0),
-                                          child: Container(
-                                            padding: EdgeInsets.symmetric(
-                                                horizontal: 8, vertical: 4),
-                                            decoration: BoxDecoration(
-                                              color: Colors.grey[300],
-                                              borderRadius:
-                                                  BorderRadius.circular(20),
-                                            ),
-                                            child: Text(
-                                              '${_itemsLocation.length - 2}+',
-                                              style: TextStyle(
-                                                  color: Colors.black,
-                                                  fontSize: 14),
-                                            ),
-                                          ),
+                                          fontSize: 16,
+                                          color: Colors.grey,
+                                          fontStyle: FontStyle.italic,
                                         ),
-                                    ],
+                                      )
+                                    else
+                                      Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          buildDetailRow(
+                                              _selectedLocation['location'] ??
+                                                  ''),
+                                          if (_selectedLocation['description']
+                                                  ?.isNotEmpty ??
+                                              false)
+                                            Padding(
+                                              padding: const EdgeInsets.only(
+                                                  left: 24.0),
+                                              child: Text(
+                                                _selectedLocation[
+                                                        'description'] ??
+                                                    '',
+                                                style: TextStyle(
+                                                  fontSize: 14,
+                                                  color: Colors.grey[600],
+                                                ),
+                                              ),
+                                            ),
+                                        ],
+                                      ),
                                     SizedBox(height: 10),
                                     Align(
                                       alignment: Alignment.bottomRight,
@@ -223,6 +184,9 @@ class _LocationItemState extends State<LocationItem>
                                                     page: LocationList(
                                                       onItemSelectedLocation:
                                                           _onItemSelectedLocation,
+                                                      selectedLocationId:
+                                                          _selectedLocation[
+                                                              'id'], // Truyền id đã chọn
                                                     ),
                                                   ),
                                                 );
@@ -242,41 +206,6 @@ class _LocationItemState extends State<LocationItem>
                                                     ),
                                                     Text(
                                                       'Thêm',
-                                                      style: TextStyle(
-                                                          color: Colors.white),
-                                                    ),
-                                                  ],
-                                                ),
-                                              ),
-                                            ),
-                                          ),
-                                          SizedBox(width: 16),
-                                          Material(
-                                            color: Colors.green,
-                                            borderRadius:
-                                                BorderRadius.circular(10),
-                                            child: InkWell(
-                                              borderRadius:
-                                                  BorderRadius.circular(10),
-                                              onTap: () {
-                                                // Thêm hành động khi nhấn nút 'Xem chi tiết'
-                                                // Ví dụ: Hiển thị chi tiết trong một modal
-                                              },
-                                              child: const Padding(
-                                                padding: EdgeInsets.symmetric(
-                                                    horizontal: 12,
-                                                    vertical: 8),
-                                                child: Row(
-                                                  mainAxisSize:
-                                                      MainAxisSize.min,
-                                                  children: [
-                                                    Icon(
-                                                      Icons.remove_red_eye,
-                                                      color: Colors.white,
-                                                      size: 15,
-                                                    ),
-                                                    Text(
-                                                      'Xem ',
                                                       style: TextStyle(
                                                           color: Colors.white),
                                                     ),
@@ -327,16 +256,24 @@ class _LocationItemState extends State<LocationItem>
   }
 
   Widget buildDetailRow(String location) {
-    return Row(
-      children: [
-        Expanded(
-          child: Text(
-            '$location ',
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(fontSize: 16),
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4.0),
+      child: Row(
+        children: [
+          Icon(Icons.location_on, size: 16, color: Colors.blue),
+          SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              location,
+              style: TextStyle(
+                fontSize: 16,
+                color: Colors.black87,
+              ),
+              overflow: TextOverflow.ellipsis,
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
