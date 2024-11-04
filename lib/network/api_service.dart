@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter_calendar/config/ngn_constant.dart';
 import 'package:flutter_calendar/models/color_model.dart';
 import 'package:flutter_calendar/models/create_event_calendar_model.dart';
+import 'package:flutter_calendar/models/create_event_resource_model.dart';
 import 'package:flutter_calendar/models/list_event_resource_model.dart';
 import 'package:flutter_calendar/models/list_root_organization_model.dart';
 import 'package:flutter_calendar/models/list_event_calendar_model.dart';
@@ -67,65 +68,6 @@ class ApiProvider {
       return model;
     } else {
       print('Login API failed with status: ${response.statusCode}');
-      return null;
-    }
-  }
-
-  Future<CreateEventCalendarModel?> createEventCalendar(
-      String token, CreateEventCalendarModel eventDetails) async {
-    var postData = {
-      'from': eventDetails.from, // Add this line
-      'to': eventDetails.to, // Add this line
-      'type': eventDetails.type,
-      'content': eventDetails.content,
-      'notes': eventDetails.notes,
-      'color': eventDetails.color,
-      'subcolor': eventDetails.subcolor,
-      'organizationId': eventDetails.organizationId, // Add this line
-      'hosts': eventDetails.hosts
-          ?.map((host) => {
-                'userId': host.userId,
-                'fullName': host.fullName,
-                'organizationName': host.organizationName,
-              })
-          .toList(),
-      'attendeesRequired': eventDetails.attendeesRequired
-          ?.map((attendee) => {
-                'userId': attendee.userId,
-                'fullName': attendee.fullName,
-                'organizationName': attendee.organizationName,
-              })
-          .toList(),
-      'attendeesNoRequired': eventDetails.attendeesNoRequired
-          ?.map((attendee) => {
-                'userId': attendee.userId,
-                'fullName': attendee.fullName,
-                'organizationName': attendee.organizationName,
-              })
-          .toList(),
-      'creator': {
-        'userId': eventDetails.creator?.userId,
-        'fullName': eventDetails.creator?.fullName,
-        'organizationName': eventDetails.creator?.organizationName,
-      },
-    };
-
-    var response = await postConnect(createEventCalendarAPI, postData, token);
-    print(response.statusCode);
-    var decodedBody = utf8.decode(response.bodyBytes);
-    // print(decodedBody);
-
-    if (response.statusCode == statusOk) {
-      var responseData = jsonDecode(decodedBody);
-      var result = responseData['result'];
-
-      CreateEventCalendarModel model =
-          CreateEventCalendarModel.fromJson(result);
-      print(result);
-      return model;
-    } else {
-      print(
-          'API tạo sự kiện thất bại với mã trạng thái: ${response.statusCode}');
       return null;
     }
   }
@@ -321,5 +263,103 @@ class ApiProvider {
       print('Error fetching event resources: $e');
     }
     return null; // Return null in case of an error or unexpected response
+  }
+
+  Future<CreateEventCalendarModel?> createEventCalendar(
+      String token, CreateEventCalendarModel eventDetails) async {
+    var postData = {
+      'from': eventDetails.from, // Add this line
+      'to': eventDetails.to, // Add this line
+      'type': eventDetails.type,
+      'content': eventDetails.content,
+      'notes': eventDetails.notes,
+      'color': eventDetails.color,
+      'subcolor': eventDetails.subcolor,
+      // Add this line
+      'hosts': eventDetails.hosts
+          ?.map((host) => {
+                'userId': host.userId,
+                'fullName': host.fullName,
+                'organizationName': host.organizationName,
+              })
+          .toList(),
+      'attendeesRequired': eventDetails.attendeesRequired
+          ?.map((attendee) => {
+                'userId': attendee.userId,
+                'fullName': attendee.fullName,
+                'organizationName': attendee.organizationName,
+              })
+          .toList(),
+      'attendeesNoRequired': eventDetails.attendeesNoRequired
+          ?.map((attendee) => {
+                'userId': attendee.userId,
+                'fullName': attendee.fullName,
+                'organizationName': attendee.organizationName,
+              })
+          .toList(),
+      'creator': {
+        'userId': eventDetails.creator?.userId,
+        'fullName': eventDetails.creator?.fullName,
+        'organizationName': eventDetails.creator?.organizationName,
+      },
+    };
+
+    var response = await postConnect(createEventCalendarAPI, postData, token);
+    print(response.statusCode);
+    var decodedBody = utf8.decode(response.bodyBytes);
+    // print(decodedBody);
+
+    if (response.statusCode == statusOk) {
+      var responseData = jsonDecode(decodedBody);
+      var result = responseData['result'];
+
+      CreateEventCalendarModel model =
+          CreateEventCalendarModel.fromJson(result);
+      print(result);
+      return model;
+    } else {
+      print(
+          'API tạo sự kiện thất bại với mã trạng thái: ${response.statusCode}');
+      return null;
+    }
+  }
+
+  Future<CreateEventResourceModel?> createEventResource(
+      String name,
+      String description,
+      int group,
+      String type,
+      String organizationId,
+      String token) async {
+    var postData = {
+      'name': name,
+      'description': description,
+      'group': group,
+      'type': type, // Thêm trường type
+      'organizationId': organizationId, // Thêm trường organizationId
+    };
+
+    try {
+      final response =
+          await postConnect(createEventResourceAPI, postData, token);
+      print('Response Status Code: ${response.statusCode}');
+      var decodedBody = utf8.decode(response.bodyBytes);
+      print('Response Body: $decodedBody');
+
+      if (response.statusCode == statusOk) {
+        var responseData = jsonDecode(decodedBody);
+        var result = responseData['result'];
+        CreateEventResourceModel model =
+            CreateEventResourceModel.fromJson(result);
+        return model;
+      } else {
+        print(
+            'Create Event Resource API failed with status: ${response.statusCode}');
+        return null;
+      }
+    } catch (e) {
+      print('Error occurred: $e');
+      return null;
+    }
   }
 }

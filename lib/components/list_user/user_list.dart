@@ -5,16 +5,23 @@ import 'package:flutter_calendar/models/organization_model.dart';
 import 'package:flutter_calendar/models/user_organization_model.dart';
 import 'package:flutter_calendar/network/api_service.dart';
 
-class MyList extends StatefulWidget {
+class UserList extends StatefulWidget {
   final Function(List<Map<String, String>>) onEmployeesSelected;
+  final Map<String, Map<String, bool>> initialSelectedEmployees;
+  final List<Map<String, String>> previouslySelectedEmployees; // Thêm dòng này
 
-  const MyList({Key? key, required this.onEmployeesSelected}) : super(key: key);
-
+  const UserList({
+    Key? key,
+    required this.onEmployeesSelected,
+    this.initialSelectedEmployees = const {},
+    this.previouslySelectedEmployees = const [], // Thêm dòng này
+  }) : super(key: key);
   @override
-  _MyListState createState() => _MyListState();
+  _UserListState createState() => _UserListState();
 }
 
-class _MyListState extends State<MyList> with SingleTickerProviderStateMixin {
+class _UserListState extends State<UserList>
+    with SingleTickerProviderStateMixin {
   TabController? _tabController;
   final ApiProvider _apiProvider = ApiProvider();
   List<Map<String, dynamic>> _filteredDataListUserorganization = [];
@@ -39,6 +46,24 @@ class _MyListState extends State<MyList> with SingleTickerProviderStateMixin {
     UserorganizationlApi();
     listSubOrganizations();
     _filteredOrganizationTree = _organizationTree;
+
+    // Khôi phục trạng thái đã chọn
+    _selectedEmployees = Map.from(widget.initialSelectedEmployees);
+    _restorePreviousSelections();
+    _updateSelectedEmployeeCount();
+  }
+
+  void _restorePreviousSelections() {
+    for (var employee in widget.previouslySelectedEmployees) {
+      String? employeeId = employee['id'];
+      String? organizationId = employee['organizationId'];
+      if (employeeId != null && organizationId != null) {
+        if (_selectedEmployees[organizationId] == null) {
+          _selectedEmployees[organizationId] = {};
+        }
+        _selectedEmployees[organizationId]![employeeId] = true;
+      }
+    }
   }
 
   Future<void> UserorganizationlApi() async {
@@ -295,6 +320,8 @@ class _MyListState extends State<MyList> with SingleTickerProviderStateMixin {
           var employee = org?.users.firstWhere((e) => e['id'] == employeeId);
           if (employee != null) {
             selectedEmployees.add({
+              'id': employeeId,
+              'organizationId': orgId,
               'fullName': employee['fullName'] ?? '',
               'jobTitle': employee['jobTitle'] ?? '',
             });
@@ -305,6 +332,12 @@ class _MyListState extends State<MyList> with SingleTickerProviderStateMixin {
     return selectedEmployees;
   }
 
+  void _onBackPressed() {
+    List<Map<String, String>> selectedEmployees = _getSelectedEmployees();
+    widget.onEmployeesSelected(selectedEmployees);
+    Navigator.of(context).pop();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -313,12 +346,7 @@ class _MyListState extends State<MyList> with SingleTickerProviderStateMixin {
         leading: IconButton(
           icon: Icon(Icons.arrow_back_ios_new_outlined,
               color: Colors.white, size: 16),
-          onPressed: () {
-            List<Map<String, String>> selectedEmployees =
-                _getSelectedEmployees();
-            widget.onEmployeesSelected(selectedEmployees);
-            Navigator.of(context).pop();
-          },
+          onPressed: _onBackPressed, // Sử dụng method mới
         ),
         title:
             Text('Chọn người tham dự', style: TextStyle(color: Colors.white)),

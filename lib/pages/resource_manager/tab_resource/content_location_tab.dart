@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_calendar/components/animation_page.dart';
 import 'package:flutter_calendar/models/list_event_resource_model.dart';
 import 'package:flutter_calendar/models/login_model.dart';
 import 'package:flutter_calendar/network/api_service.dart';
+import 'package:flutter_calendar/pages/resource_manager/add_page_location/add_location_page.dart';
 
 class TabContentLocation extends StatefulWidget {
   @override
@@ -119,7 +121,13 @@ class _TabContentLocationState extends State<TabContentLocation>
             alignment: Alignment.bottomCenter,
             child: ElevatedButton(
               onPressed: () {
-                // Handle add button press
+                Navigator.push(
+                  context,
+                  SlideFromRightPageRoute(
+                    page:
+                        AddLocationPage(), // Thay editPage() bằng trang cần chuyển tới
+                  ),
+                );
               },
               style: ElevatedButton.styleFrom(
                 padding: EdgeInsets.all(15),

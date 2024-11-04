@@ -1,19 +1,34 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_calendar/pages/content_location_page/content_location.dart';
-import 'package:flutter_calendar/pages/content_resourc_page/content_resourc_page.dart';
+import 'package:flutter_calendar/pages/addtask_manager/addtask_tab/content_addtask_tab.dart';
+import 'package:flutter_calendar/pages/addtask_manager/addtask_tab/content_persion_tab.dart';
 
-class ResourceManagementPage extends StatelessWidget {
+class AddTaskPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Quản lý tài nguyên'),
+        leading: IconButton(
+          icon: Icon(
+            Icons.arrow_back_ios_new_outlined,
+            color: Colors.white,
+            size: 16,
+          ),
+          onPressed: () {
+            Navigator.of(context).pop();
+          },
+        ),
+        title: Text(
+          'Thêm lịch',
+          style: TextStyle(color: Colors.white),
+        ),
         backgroundColor: Colors.blue,
-        foregroundColor:
-            Colors.white, // Thay đổi màu chữ của các phần tử trong AppBar
+        foregroundColor: Colors.white,
       ),
-      body: Padding(
-        padding: MediaQuery.of(context).viewInsets,
+      body: GestureDetector(
+        onTap: () {
+          // Dismiss keyboard when tapping outside of text fields
+          FocusScope.of(context).unfocus();
+        },
         child: DefaultTabController(
           length: 2,
           child: Column(
@@ -37,16 +52,20 @@ class ResourceManagementPage extends StatelessWidget {
                   unselectedLabelStyle: TextStyle(color: Colors.white),
                   dividerHeight: 0,
                   tabs: [
-                    Tab(text: 'Địa điểm'),
-                    Tab(text: 'Tài nguyên'),
+                    Tab(
+                      text: 'Thông tin lịch',
+                    ),
+                    Tab(
+                      text: 'Chủ trì cuộc họp',
+                    ),
                   ],
                 ),
               ),
               Expanded(
                 child: TabBarView(
                   children: [
-                    TabContentLocation(),
-                    TabContentResource(),
+                    SingleChildScrollView(child: TabContentAddTask()),
+                    SingleChildScrollView(child: TabContentPerson()),
                   ],
                 ),
               ),

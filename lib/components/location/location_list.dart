@@ -4,13 +4,15 @@ import 'package:flutter_calendar/models/login_model.dart';
 import 'package:flutter_calendar/network/api_service.dart';
 
 class LocationList extends StatefulWidget {
-  final Function(Map<String, String> locationData) onItemSelectedLocation;
+  final Function(Map<String, String>?)
+      onItemSelectedLocation; // Make parameter nullable
   final String? selectedLocationId;
 
-  LocationList(
-      {required this.onItemSelectedLocation,
-      this.selectedLocationId // Thêm vào constructor
-      });
+  const LocationList({
+    Key? key,
+    required this.onItemSelectedLocation,
+    this.selectedLocationId,
+  }) : super(key: key);
 
   @override
   State<LocationList> createState() => _LocationListState();
@@ -150,12 +152,14 @@ class _LocationListState extends State<LocationList> {
             trailing: ElevatedButton(
               onPressed: () {
                 if (isSelected) {
-                  // Nếu đã chọn, nhấn để hủy
+                  // When canceling, call onItemSelectedLocation with null
+                  widget.onItemSelectedLocation(null);
                   setState(() {
                     _selectedLocationId = null;
                   });
+                  Navigator.of(context).pop();
                 } else {
-                  // Chọn địa điểm mới
+                  // Selecting new location
                   widget.onItemSelectedLocation({
                     'id': data['id'] ?? '',
                     'location': data['location'] ?? '',
@@ -169,9 +173,7 @@ class _LocationListState extends State<LocationList> {
                 padding: EdgeInsets.symmetric(horizontal: 16),
               ),
               child: Text(
-                isSelected
-                    ? 'Hủy'
-                    : 'Chọn', // Thay đổi văn bản dựa trên trạng thái
+                isSelected ? 'Hủy' : 'Chọn',
                 style: TextStyle(color: Colors.white),
               ),
             ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_calendar/components/list_user/user_list.dart';
 import 'package:flutter_calendar/components/location/location_item.dart';
 import 'package:flutter_calendar/components/resource/resource_item.dart';
 import 'package:flutter_calendar/components/list_user/user_item.dart';
@@ -36,7 +37,7 @@ class _TabContentPersonState extends State<TabContentPerson>
                 ],
               ),
               SizedBox(height: 10),
-              UserListCard(title: 'Người chủ trì'),
+              UserItem(title: 'Người chủ trì'),
               Row(
                 children: [
                   Text(
@@ -46,9 +47,9 @@ class _TabContentPersonState extends State<TabContentPerson>
                 ],
               ),
               SizedBox(height: 10),
-              UserListCard(title: 'Người tham dự'),
+              UserItem(title: 'Người tham dự'),
               SizedBox(height: 10),
-              UserListCard(title: 'Người tham dự bắt buộc'),
+              UserItem(title: 'Người tham dự bắt buộc'),
               Row(
                 children: [
                   Text(

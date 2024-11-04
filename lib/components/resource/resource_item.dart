@@ -17,8 +17,10 @@ class _ResourceItemState extends State<ResourceItem>
   late Animation<double> _animation;
   bool _isExpanded = false;
 
-  String _selectedResource = '';
+  // Thay đổi kiểu dữ liệu để phù hợp với cấu trúc mới
+  Map<String, String> _selectedResource = {};
   List<Map<String, String>> _itemsResource = [];
+
   @override
   void initState() {
     super.initState();
@@ -49,11 +51,18 @@ class _ResourceItemState extends State<ResourceItem>
     });
   }
 
-  void _onItemSelectedResource(String resource) {
+  // Cập nhật hàm xử lý khi chọn tài nguyên
+  void _onItemSelectedResource(Map<String, String>? resourceData) {
     setState(() {
-      _selectedResource = resource;
-
-      _itemsResource.add({'resource': resource}); // Thêm mục mới vào danh sách
+      if (resourceData == null) {
+        // Xóa lựa chọn
+        _selectedResource = {};
+        _itemsResource = [];
+      } else {
+        // Cập nhật lựa chọn mới
+        _selectedResource = resourceData;
+        _itemsResource = [resourceData];
+      }
     });
   }
 
@@ -89,30 +98,16 @@ class _ResourceItemState extends State<ResourceItem>
                         title: Row(
                           children: [
                             Expanded(
-                              child: Column(
-                                children: [
-                                  Row(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceBetween,
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Flexible(
-                                        child: AutoSizeText(
-                                          widget.resource,
-                                          style: TextStyle(
-                                            fontSize: 14,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                          maxLines: 5,
-                                          minFontSize: 14,
-                                          textAlign: TextAlign.left,
-                                          overflow: TextOverflow.ellipsis,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ],
+                              child: AutoSizeText(
+                                widget.resource,
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                                maxLines: 5,
+                                minFontSize: 14,
+                                textAlign: TextAlign.left,
+                                overflow: TextOverflow.ellipsis,
                               ),
                             ),
                           ],
@@ -129,45 +124,41 @@ class _ResourceItemState extends State<ResourceItem>
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    // Hiển thị danh sách các mục hoặc thông báo không có người tham dự
                                     if (_itemsResource.isEmpty)
                                       Text(
-                                        'Không có tài nguyên',
+                                        'Chưa chọn tài nguyên',
                                         style: TextStyle(
-                                            fontSize: 16, color: Colors.grey),
-                                      )
-                                    else ...[
-                                      // Hiển thị tối đa 2 mục
-                                      ..._itemsResource
-                                          .take(2)
-                                          .map((item) => buildDetailRow(
-                                              item['resource'] ?? ''))
-                                          .toList(),
-
-                                      // Nếu danh sách có nhiều hơn 2 mục, hiển thị thông báo số mục còn lại
-                                      if (_itemsResource.length > 2)
-                                        Padding(
-                                          padding:
-                                              const EdgeInsets.only(top: 8.0),
-                                          child: Container(
-                                            padding: EdgeInsets.symmetric(
-                                                horizontal: 8, vertical: 4),
-                                            decoration: BoxDecoration(
-                                              color: Colors.grey[
-                                                  300], // Màu nền cho thông báo số lượng
-                                              borderRadius:
-                                                  BorderRadius.circular(20),
-                                            ),
-                                            child: Text(
-                                              '${_itemsResource.length - 2}+', // Hiển thị số lượng mục còn lại
-                                              style: TextStyle(
-                                                  color: Colors.black,
-                                                  fontSize: 14),
-                                            ),
-                                          ),
+                                          fontSize: 16,
+                                          color: Colors.grey,
+                                          fontStyle: FontStyle.italic,
                                         ),
-                                    ],
-
+                                      )
+                                    else
+                                      Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          buildDetailRow(
+                                              _selectedResource['resource'] ??
+                                                  ''),
+                                          if (_selectedResource['description']
+                                                  ?.isNotEmpty ??
+                                              false)
+                                            Padding(
+                                              padding: const EdgeInsets.only(
+                                                  left: 24.0),
+                                              child: Text(
+                                                _selectedResource[
+                                                        'description'] ??
+                                                    '',
+                                                style: TextStyle(
+                                                  fontSize: 14,
+                                                  color: Colors.grey[600],
+                                                ),
+                                              ),
+                                            ),
+                                        ],
+                                      ),
                                     SizedBox(height: 10),
                                     Align(
                                       alignment: Alignment.bottomRight,
@@ -188,6 +179,9 @@ class _ResourceItemState extends State<ResourceItem>
                                                     page: ResourceList(
                                                       onItemSelectedResource:
                                                           _onItemSelectedResource,
+                                                      selectedResourceId:
+                                                          _selectedResource[
+                                                              'id'],
                                                     ),
                                                   ),
                                                 );
@@ -207,44 +201,6 @@ class _ResourceItemState extends State<ResourceItem>
                                                     ),
                                                     Text(
                                                       'Thêm',
-                                                      style: TextStyle(
-                                                          color: Colors.white),
-                                                    ),
-                                                  ],
-                                                ),
-                                              ),
-                                            ),
-                                          ),
-                                          SizedBox(
-                                              width:
-                                                  16), // Khoảng cách giữa hai nút
-                                          // Nút 'Xem chi tiết'
-                                          Material(
-                                            color: Colors.green,
-                                            borderRadius:
-                                                BorderRadius.circular(10),
-                                            child: InkWell(
-                                              borderRadius:
-                                                  BorderRadius.circular(10),
-                                              onTap: () {
-                                                _showDetailsDialog(
-                                                    context); // Hiển thị chi tiết
-                                              },
-                                              child: const Padding(
-                                                padding: EdgeInsets.symmetric(
-                                                    horizontal: 12,
-                                                    vertical: 8),
-                                                child: Row(
-                                                  mainAxisSize:
-                                                      MainAxisSize.min,
-                                                  children: [
-                                                    Icon(
-                                                      Icons.remove_red_eye,
-                                                      color: Colors.white,
-                                                      size: 15,
-                                                    ),
-                                                    Text(
-                                                      'Xem',
                                                       style: TextStyle(
                                                           color: Colors.white),
                                                     ),
@@ -273,15 +229,12 @@ class _ResourceItemState extends State<ResourceItem>
                 right: 0,
                 child: Align(
                   alignment: Alignment.center,
-                  child: Padding(
-                    padding: const EdgeInsets.only(bottom: 0),
-                    child: IconButton(
-                      icon: Icon(
-                        _isExpanded ? Icons.expand_less : Icons.expand_more,
-                        color: Colors.blue,
-                      ),
-                      onPressed: _toggleExpansion,
+                  child: IconButton(
+                    icon: Icon(
+                      _isExpanded ? Icons.expand_less : Icons.expand_more,
+                      color: Colors.blue,
                     ),
+                    onPressed: _toggleExpansion,
                   ),
                 ),
               ),
@@ -293,60 +246,25 @@ class _ResourceItemState extends State<ResourceItem>
   }
 
   Widget buildDetailRow(String resource) {
-    return Row(
-      children: [
-        Expanded(
-          child: Text(
-            '$resource ', // Kết hợp tên và chức vụ vào một dòng
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(fontSize: 16),
-          ),
-        ),
-      ],
-    );
-  }
-
-  void _showDetailsDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text('Danh sách người đã thêm'),
-          content: _itemsResource.isEmpty
-              ? Text('Chưa có người nào được thêm vào.') // Nếu danh sách rỗng
-              : Container(
-                  width: double.maxFinite,
-                  child: ListView.builder(
-                    shrinkWrap: true,
-                    itemCount: _itemsResource.length,
-                    itemBuilder: (BuildContext context, int index) {
-                      final item = _itemsResource[index];
-                      return ListTile(
-                        subtitle: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              '${item['resource']} ',
-                              style: TextStyle(
-                                  fontSize: 14), // Giảm kích thước chữ
-                            ),
-                            // Thêm khoảng cách giữa các mục
-                          ],
-                        ),
-                      );
-                    },
-                  ),
-                ),
-          actions: [
-            TextButton(
-              child: Text('Đóng'),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4.0),
+      child: Row(
+        children: [
+          Icon(Icons.inventory_2,
+              size: 16, color: Colors.blue), // Icon cho tài nguyên
+          SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              resource,
+              style: TextStyle(
+                fontSize: 16,
+                color: Colors.black87,
+              ),
+              overflow: TextOverflow.ellipsis,
             ),
-          ],
-        );
-      },
+          ),
+        ],
+      ),
     );
   }
 }

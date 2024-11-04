@@ -50,10 +50,18 @@ class _LocationItemState extends State<LocationItem>
     });
   }
 
-  void _onItemSelectedLocation(Map<String, String> locationData) {
+  void _onItemSelectedLocation(Map<String, String>? locationData) {
+    // Make parameter nullable
     setState(() {
-      _selectedLocation = locationData;
-      _itemsLocation = [locationData]; // Cập nhật danh sách với địa điểm mới
+      if (locationData == null) {
+        // Clear selection
+        _selectedLocation = {};
+        _itemsLocation = [];
+      } else {
+        // Set new location
+        _selectedLocation = locationData;
+        _itemsLocation = [locationData];
+      }
     });
   }
 

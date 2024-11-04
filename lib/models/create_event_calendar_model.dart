@@ -9,7 +9,7 @@ class CreateEventCalendarModel {
   final String? notes;
   final String? color;
   final String? subcolor;
-  final String? organizationId; // Add this line
+  // Add this line
   final int? from; // Add this line
   final int? to; // Add this line
   final List<Host>? hosts;
@@ -26,7 +26,7 @@ class CreateEventCalendarModel {
     this.notes,
     this.color,
     this.subcolor,
-    this.organizationId, // Add this line
+    // Add this line
     this.from, // Add this line
     this.to, // Add this line
     this.hosts,
@@ -45,7 +45,7 @@ class CreateEventCalendarModel {
       notes: json['notes'],
       color: json['color'],
       subcolor: json['subcolor'],
-      organizationId: json['organizationId'], // Add this line
+      // Add this line
       from: json['from'], // Add this line
       to: json['to'], // Add this line
       hosts: (json['hosts'] as List<dynamic>?)

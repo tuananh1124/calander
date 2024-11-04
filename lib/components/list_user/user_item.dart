@@ -3,16 +3,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter_calendar/components/animation_page.dart';
 import 'package:flutter_calendar/components/list_user/user_list.dart';
 
-class UserListCard extends StatefulWidget {
+class UserItem extends StatefulWidget {
   final String title;
 
-  const UserListCard({super.key, required this.title});
+  const UserItem({super.key, required this.title});
 
   @override
-  State<UserListCard> createState() => _UserListCardState();
+  State<UserItem> createState() => _UserItemState();
 }
 
-class _UserListCardState extends State<UserListCard>
+class _UserItemState extends State<UserItem>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _animation;
@@ -20,7 +20,7 @@ class _UserListCardState extends State<UserListCard>
 
   List<Map<String, String>> _items = []; // Danh sách các mục
   List<Map<String, String>> _selectedEmployees = [];
-
+  Map<String, Map<String, bool>> _selectedEmployeesState = {};
   @override
   void initState() {
     super.initState();
@@ -52,18 +52,31 @@ class _UserListCardState extends State<UserListCard>
   }
 
   void _showMyList() {
-    Navigator.of(context).push(
+    Navigator.of(context)
+        .push(
       SlideFromRightPageRoute(
-        page: MyList(
+        page: UserList(
           onEmployeesSelected: (employees) {
             setState(() {
               _selectedEmployees = employees;
-              _items = employees; // Update _items with selected employees
+              _items = employees;
             });
           },
+          initialSelectedEmployees: _selectedEmployeesState,
+          previouslySelectedEmployees:
+              _items, // Truyền danh sách đã chọn trước đó
         ),
       ),
-    );
+    )
+        .then((value) {
+      setState(() {});
+    });
+  }
+
+  void _updateSelectedState(Map<String, Map<String, bool>> newState) {
+    setState(() {
+      _selectedEmployeesState = newState;
+    });
   }
 
   // Hàm để hiển thị danh sách chi tiết

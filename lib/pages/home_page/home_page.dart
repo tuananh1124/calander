@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_calendar/components/list_card/TabCard_list.dart';
+import 'package:flutter_calendar/pages/addtask_manager/add_task_page.dart';
 import 'package:flutter_calendar/pages/month_boxes/bloc/month_bloc.dart';
 import 'package:flutter_calendar/pages/month_boxes/calanderToMonth.dart';
-import 'package:flutter_calendar/pages/add_task_page/add_task_page.dart';
 import 'package:flutter_calendar/pages/home_page/bloc/date_bloc.dart';
 import 'package:flutter_calendar/pages/menu_drawer/menu_drawer.dart';
-import 'package:flutter_calendar/pages/content_resourc_page/resource_mana_page.dart';
 import 'package:flutter_calendar/components/search_bar.dart';
+import 'package:flutter_calendar/pages/resource_manager/resource_mana_page.dart';
 import 'package:intl/intl.dart';
 
 class HomePage extends StatefulWidget {
