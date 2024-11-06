@@ -16,10 +16,7 @@ class _ResourceItemState extends State<ResourceItem>
   late AnimationController _controller;
   late Animation<double> _animation;
   bool _isExpanded = false;
-
-  // Thay đổi kiểu dữ liệu để phù hợp với cấu trúc mới
-  Map<String, String> _selectedResource = {};
-  List<Map<String, String>> _itemsResource = [];
+  List<Map<String, String>> _selectedResources = [];
 
   @override
   void initState() {
@@ -51,18 +48,9 @@ class _ResourceItemState extends State<ResourceItem>
     });
   }
 
-  // Cập nhật hàm xử lý khi chọn tài nguyên
-  void _onItemSelectedResource(Map<String, String>? resourceData) {
+  void _onItemSelectedResource(List<Map<String, String>> resources) {
     setState(() {
-      if (resourceData == null) {
-        // Xóa lựa chọn
-        _selectedResource = {};
-        _itemsResource = [];
-      } else {
-        // Cập nhật lựa chọn mới
-        _selectedResource = resourceData;
-        _itemsResource = [resourceData];
-      }
+      _selectedResources = resources;
     });
   }
 
@@ -124,41 +112,7 @@ class _ResourceItemState extends State<ResourceItem>
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    if (_itemsResource.isEmpty)
-                                      Text(
-                                        'Chưa chọn tài nguyên',
-                                        style: TextStyle(
-                                          fontSize: 16,
-                                          color: Colors.grey,
-                                          fontStyle: FontStyle.italic,
-                                        ),
-                                      )
-                                    else
-                                      Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          buildDetailRow(
-                                              _selectedResource['resource'] ??
-                                                  ''),
-                                          if (_selectedResource['description']
-                                                  ?.isNotEmpty ??
-                                              false)
-                                            Padding(
-                                              padding: const EdgeInsets.only(
-                                                  left: 24.0),
-                                              child: Text(
-                                                _selectedResource[
-                                                        'description'] ??
-                                                    '',
-                                                style: TextStyle(
-                                                  fontSize: 14,
-                                                  color: Colors.grey[600],
-                                                ),
-                                              ),
-                                            ),
-                                        ],
-                                      ),
+                                    _buildSelectedResources(),
                                     SizedBox(height: 10),
                                     Align(
                                       alignment: Alignment.bottomRight,
@@ -179,9 +133,11 @@ class _ResourceItemState extends State<ResourceItem>
                                                     page: ResourceList(
                                                       onItemSelectedResource:
                                                           _onItemSelectedResource,
-                                                      selectedResourceId:
-                                                          _selectedResource[
-                                                              'id'],
+                                                      selectedResourceIds:
+                                                          _selectedResources
+                                                              .map((r) =>
+                                                                  r['id'] ?? '')
+                                                              .toList(),
                                                     ),
                                                   ),
                                                 );
@@ -245,13 +201,38 @@ class _ResourceItemState extends State<ResourceItem>
     );
   }
 
+  // Thay thế hàm _buildSelectedResources() cũ bằng hàm mới này:
+
+  Widget _buildSelectedResources() {
+    if (_selectedResources.isEmpty) {
+      return Text(
+        'Chưa chọn tài nguyên',
+        style: TextStyle(
+          fontSize: 16,
+          color: Colors.grey,
+          fontStyle: FontStyle.italic,
+        ),
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: _selectedResources.map((resource) {
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 8.0),
+          child: buildDetailRow(
+              "${resource['resource'] ?? ''} ${resource['description']?.isNotEmpty ?? false ? "- ${resource['description']}" : ''}"),
+        );
+      }).toList(),
+    );
+  }
+
   Widget buildDetailRow(String resource) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4.0),
       child: Row(
         children: [
-          Icon(Icons.inventory_2,
-              size: 16, color: Colors.blue), // Icon cho tài nguyên
+          Icon(Icons.inventory_2, size: 16, color: Colors.blue),
           SizedBox(width: 8),
           Expanded(
             child: Text(

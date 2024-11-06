@@ -4,14 +4,13 @@ import 'package:flutter_calendar/models/login_model.dart';
 import 'package:flutter_calendar/network/api_service.dart';
 
 class ResourceList extends StatefulWidget {
-  final Function(Map<String, String>?)
-      onItemSelectedResource; // Sửa kiểu dữ liệu trả về
-  final String? selectedResourceId; // Thêm ID đã chọn
+  final Function(List<Map<String, String>>) onItemSelectedResource;
+  final List<String> selectedResourceIds;
 
   const ResourceList({
     Key? key,
     required this.onItemSelectedResource,
-    this.selectedResourceId,
+    required this.selectedResourceIds,
   }) : super(key: key);
 
   @override
@@ -19,16 +18,16 @@ class ResourceList extends StatefulWidget {
 }
 
 class _ResourceListState extends State<ResourceList> {
-  final List<Map<String, String>> dataListResource = []; // Danh sách tài nguyên
+  final List<Map<String, String>> dataListResource = [];
   final ApiProvider _apiProvider = ApiProvider();
-  String? _selectedResourceId; // ID tài nguyên đã chọn
-  List<Map<String, String>> _filteredDataListResource = []; // Danh sách đã lọc
+  List<String> _selectedResourceIds = []; // Thay đổi thành list
+  List<Map<String, String>> _filteredDataListResource = [];
   final TextEditingController _searchController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
-    _selectedResourceId = widget.selectedResourceId; // Khởi tạo ID đã chọn
+    _selectedResourceIds = List.from(widget.selectedResourceIds);
     _filteredDataListResource = dataListResource;
     _searchController.addListener(_filterResource);
     _fetchResourceData();
@@ -83,7 +82,14 @@ class _ResourceListState extends State<ResourceList> {
       appBar: AppBar(
         leading: IconButton(
           icon: Icon(Icons.arrow_back_ios_new_outlined, size: 16),
-          onPressed: () => Navigator.of(context).pop(),
+          onPressed: () {
+            // Trả về danh sách các item đã chọn
+            List<Map<String, String>> selectedItems = _filteredDataListResource
+                .where((item) => _selectedResourceIds.contains(item['id']))
+                .toList();
+            widget.onItemSelectedResource(selectedItems);
+            Navigator.of(context).pop();
+          },
         ),
         title: Text('Chọn tài nguyên'),
         backgroundColor: Colors.blue,
@@ -133,7 +139,7 @@ class _ResourceListState extends State<ResourceList> {
       itemCount: _filteredDataListResource.length,
       itemBuilder: (context, index) {
         final data = _filteredDataListResource[index];
-        final isSelected = data['id'] == _selectedResourceId;
+        final isSelected = _selectedResourceIds.contains(data['id']);
 
         return Card(
           margin: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -147,21 +153,15 @@ class _ResourceListState extends State<ResourceList> {
             subtitle: Text(data['description'] ?? ''),
             trailing: ElevatedButton(
               onPressed: () {
-                if (isSelected) {
-                  // Hủy chọn
-                  widget.onItemSelectedResource(null);
-                  setState(() {
-                    _selectedResourceId = null;
-                  });
-                } else {
-                  // Chọn mới
-                  widget.onItemSelectedResource({
-                    'id': data['id'] ?? '',
-                    'resource': data['resource'] ?? '',
-                    'description': data['description'] ?? ''
-                  });
-                }
-                Navigator.of(context).pop();
+                setState(() {
+                  if (isSelected) {
+                    // Hủy chọn
+                    _selectedResourceIds.remove(data['id']);
+                  } else {
+                    // Chọn mới
+                    _selectedResourceIds.add(data['id'] ?? '');
+                  }
+                });
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: isSelected ? Colors.red : Colors.blue,

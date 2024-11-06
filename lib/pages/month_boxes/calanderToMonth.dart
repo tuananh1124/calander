@@ -1,10 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_calendar/models/list_event_calendar_model.dart';
+import 'package:flutter_calendar/models/login_model.dart';
+import 'package:flutter_calendar/network/api_service.dart';
 import 'package:intl/intl.dart'; // Import thư viện để định dạng ngày tháng
 
 class CalendarWidget extends StatefulWidget {
   final DateTime selectedDate;
+  final Function(DateTime)? onDaySelected; // Thêm callback
 
-  CalendarWidget({Key? key, required this.selectedDate}) : super(key: key);
+  CalendarWidget({
+    Key? key,
+    required this.selectedDate,
+    this.onDaySelected,
+  }) : super(key: key);
 
   @override
   _CalendarWidgetState createState() => _CalendarWidgetState();
@@ -12,28 +20,15 @@ class CalendarWidget extends StatefulWidget {
 
 class _CalendarWidgetState extends State<CalendarWidget> {
   late DateTime _currentDate;
-
-  // Dữ liệu số lượng lịch theo ngày
-  final Map<int, int> eventsCount = {
-    1: 1,
-    2: 1,
-    4: 5,
-    6: 2,
-    10: 1,
-    12: 3,
-    16: 1,
-    18: 2,
-    20: 1,
-    22: 4,
-    26: 1,
-    30: 1,
-    // Thêm các ngày khác và số lượng lịch tương ứng
-  };
+  final ApiProvider _apiProvider = ApiProvider();
+  Map<int, int> eventsCount = {};
+  bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
     _currentDate = widget.selectedDate;
+    _fetchEvents();
   }
 
   @override
@@ -42,12 +37,55 @@ class _CalendarWidgetState extends State<CalendarWidget> {
     if (widget.selectedDate != oldWidget.selectedDate) {
       setState(() {
         _currentDate = widget.selectedDate;
+        _fetchEvents();
       });
+    }
+  }
+
+  Future<void> _fetchEvents() async {
+    setState(() => _isLoading = true);
+    try {
+      List<ListEventcalendarModel>? events =
+          await _apiProvider.getListEveneCalendar(User.token.toString());
+
+      if (events != null) {
+        Map<int, int> newEventsCount = {};
+
+        for (var event in events) {
+          if (event.from != null) {
+            DateTime eventDate =
+                DateTime.fromMillisecondsSinceEpoch(event.from!);
+
+            // Chỉ đếm các sự kiện trong tháng hiện tại
+            if (eventDate.year == _currentDate.year &&
+                eventDate.month == _currentDate.month) {
+              int day = eventDate.day;
+              newEventsCount[day] = (newEventsCount[day] ?? 0) + 1;
+            }
+          }
+        }
+
+        if (mounted) {
+          setState(() {
+            eventsCount = newEventsCount;
+            _isLoading = false;
+          });
+        }
+      }
+    } catch (e) {
+      print('Error fetching events: $e');
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return Center(child: CircularProgressIndicator());
+    }
+
     return SingleChildScrollView(
       child: Container(
         padding: EdgeInsets.all(16),
@@ -80,9 +118,7 @@ class _CalendarWidgetState extends State<CalendarWidget> {
     int daysInMonth =
         DateTime(_currentDate.year, _currentDate.month + 1, 0).day;
     int weekdayOfFirstDay = firstDayOfMonth.weekday % 7;
-
     DateTime today = DateTime.now();
-
     int totalDays = daysInMonth + weekdayOfFirstDay;
 
     return Column(
@@ -108,15 +144,12 @@ class _CalendarWidgetState extends State<CalendarWidget> {
                 _currentDate.month == today.month &&
                 day == today.day;
 
-            bool isWeekend = (index % 7 == 0 || index % 7 == 7); // Chủ nhật
-            bool hasCheckmark =
-                [1, 2, 4, 6, 10, 12, 16, 18, 20, 22, 26, 30].contains(day);
+            bool isWeekend = (index % 7 == 0); // Chỉ Chủ nhật
+            bool hasEvents = eventsCount.containsKey(day);
+            int eventCount = eventsCount[day] ?? 0;
 
-            // Lấy số lượng lịch cho ngày này, chỉ áp dụng cho các ngày không phải là Chủ nhật
-            int eventCount = (index % 7 != 0) ? (eventsCount[day] ?? 0) : 0;
-
-            return _buildDayCell(day, isWeekend, isToday,
-                hasCheckmark && !isWeekend, eventCount);
+            return _buildDayCell(
+                day, isWeekend, isToday, hasEvents && !isWeekend, eventCount);
           },
         ),
       ],
@@ -136,51 +169,60 @@ class _CalendarWidgetState extends State<CalendarWidget> {
 
   Widget _buildDayCell(int day, bool isWeekend, bool isToday, bool hasCheckmark,
       int eventCount) {
-    return Container(
-      margin: EdgeInsets.all(2),
-      decoration: BoxDecoration(
-        color: isWeekend
-            ? Colors.red[100]
-            : (isToday ? Colors.green : Colors.white),
-        shape: BoxShape.circle,
-      ),
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          Text(
-            day.toString(),
-            style: TextStyle(
-              color: isToday ? Colors.white : Colors.black,
-              fontWeight: isToday ? FontWeight.bold : FontWeight.normal,
+    return GestureDetector(
+      onTap: () {
+        if (hasCheckmark) {
+          final selectedDate =
+              DateTime(_currentDate.year, _currentDate.month, day);
+          widget.onDaySelected?.call(selectedDate);
+        }
+      },
+      child: Container(
+        margin: EdgeInsets.all(2),
+        decoration: BoxDecoration(
+          color: isWeekend
+              ? Colors.red[100]
+              : (isToday ? Colors.green : Colors.white),
+          shape: BoxShape.circle,
+        ),
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            Text(
+              day.toString(),
+              style: TextStyle(
+                color: isToday ? Colors.white : Colors.black,
+                fontWeight: isToday ? FontWeight.bold : FontWeight.normal,
+              ),
             ),
-          ),
-          if (hasCheckmark) // Hiện dấu tích chỉ khi không phải Chủ nhật
-            Positioned(
-              right: 6,
-              bottom: 2,
-              child: Icon(Icons.check, color: Colors.red, size: 20),
-            ),
-          // Hiển thị số lượng lịch
-          if (eventCount > 0)
-            Positioned(
-              left: 6,
-              bottom: 2,
-              child: Container(
-                padding: EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-                decoration: BoxDecoration(
-                  color: Colors.blue,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Text(
-                  eventCount.toString(),
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 12,
+            if (hasCheckmark) // Hiện dấu tích chỉ khi không phải Chủ nhật
+              Positioned(
+                right: 6,
+                bottom: 2,
+                child: Icon(Icons.check, color: Colors.red, size: 20),
+              ),
+            // Hiển thị số lượng lịch
+            if (eventCount > 0)
+              Positioned(
+                left: 6,
+                bottom: 2,
+                child: Container(
+                  padding: EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: Colors.blue,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    eventCount.toString(),
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 12,
+                    ),
                   ),
                 ),
               ),
-            ),
-        ],
+          ],
+        ),
       ),
     );
   }

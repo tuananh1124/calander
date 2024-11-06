@@ -40,4 +40,6 @@ class User {
   static String? fullName;
   static String? token;
   static String? colors;
+  static String? organizationId;
+  static String? organizationName;
 }

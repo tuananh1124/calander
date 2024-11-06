@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_calendar/components/animation_page.dart';
 import 'package:flutter_calendar/models/list_event_resource_model.dart';
 import 'package:flutter_calendar/models/login_model.dart';
 import 'package:flutter_calendar/network/api_service.dart';
+import 'package:flutter_calendar/pages/resource_manager/add_page_manager/add_resource_page.dart';
+import 'package:flutter_calendar/pages/resource_manager/edit_manager/edit_location_page.dart';
 
 class TabContentResource extends StatefulWidget {
   @override
@@ -20,16 +23,20 @@ class _TabContentResourceState extends State<TabContentResource>
     ListEventResource();
   }
 
+  Future<void> refreshList() async {
+    await ListEventResource();
+  }
+
   Future<void> ListEventResource() async {
     List<ListEventResourceModel>? ListEvent =
         await _apiProvider.getListEventResource(User.token.toString());
 
     if (ListEvent != null) {
       setState(() {
-        _filteredDataListResource = ListEvent.where(
-                (item) => item.group == 1) // Filter items where group == 0
-            .map((item) {
+        _filteredDataListResource =
+            ListEvent.where((item) => item.group == 1).map((item) {
           return {
+            'id': item.id ?? '',
             'name': item.name ?? '',
             'description': item.description ?? '',
           };
@@ -38,8 +45,89 @@ class _TabContentResourceState extends State<TabContentResource>
     }
   }
 
+  Future<void> _deleteLocation(String id) async {
+    try {
+      bool success =
+          await _apiProvider.deleteEventCalendar(id, User.token.toString());
+      if (success) {
+        // Nếu xóa thành công, cập nhật lại danh sách
+        await refreshList();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Xóa tài nguyên thành công')),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Xóa tài nguyên thất bại')),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Có lỗi xảy ra: $e')),
+      );
+    }
+  }
+
+  void _showDeleteConfirmationDialog(String id, String name) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Xác nhận xóa'),
+          content: Text('Bạn có chắc chắn muốn xóa tài nguyên "$name"?'),
+          actions: <Widget>[
+            TextButton(
+              child: Text('Hủy'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+            TextButton(
+              child: Text('Xóa'),
+              onPressed: () {
+                Navigator.of(context).pop();
+                _deleteLocation(id);
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   bool get wantKeepAlive => true;
+
+  Widget _buildEmptyState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.inventory_2_outlined, // Thay đổi icon phù hợp với tài nguyên
+            size: 70,
+            color: Colors.grey,
+          ),
+          SizedBox(height: 16),
+          Text(
+            'Chưa có tài nguyên nào', // Thay đổi text
+            style: TextStyle(
+              fontSize: 18,
+              color: Colors.grey[600],
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          SizedBox(height: 8),
+          Text(
+            'Nhấn nút + để thêm tài nguyên mới', // Thay đổi text
+            style: TextStyle(
+              fontSize: 16,
+              color: Colors.grey[500],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -52,61 +140,76 @@ class _TabContentResourceState extends State<TabContentResource>
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Expanded(
-                child: ListView.builder(
-                  itemCount: _filteredDataListResource.length,
-                  itemBuilder: (context, index) {
-                    final data = _filteredDataListResource[index];
-                    final isSelected = data['name'] == _selectedResource;
+                child: _filteredDataListResource.isEmpty
+                    ? _buildEmptyState() // Hiển thị trạng thái trống
+                    : ListView.builder(
+                        itemCount: _filteredDataListResource.length,
+                        itemBuilder: (context, index) {
+                          final data = _filteredDataListResource[index];
+                          final isSelected = data['name'] == _selectedResource;
 
-                    return Container(
-                      decoration: BoxDecoration(
-                        border: Border(
-                          bottom: BorderSide(
-                            color: Colors.grey,
-                            width: 1.0,
-                          ),
-                        ),
+                          return Container(
+                            decoration: BoxDecoration(
+                              border: Border(
+                                bottom: BorderSide(
+                                  color: Colors.grey,
+                                  width: 1.0,
+                                ),
+                              ),
+                            ),
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(
+                                  vertical: 5, horizontal: 10.0),
+                              child: Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Expanded(
+                                    child: Text(
+                                      '${data['name']} - ${data['description']}',
+                                      style: TextStyle(fontSize: 16),
+                                    ),
+                                  ),
+                                  IconButton(
+                                    onPressed: () async {
+                                      final result = await Navigator.push(
+                                        context,
+                                        SlideFromRightPageRoute(
+                                          page: EditLocationPage(
+                                            id: data['id']!,
+                                            name: data['name']!,
+                                            description: data['description']!,
+                                          ),
+                                        ),
+                                      );
+                                      if (result == true) {
+                                        // Refresh list nếu cập nhật thành công
+                                        refreshList();
+                                      }
+                                    },
+                                    icon: Icon(
+                                      Icons.edit,
+                                      color: Colors.blue,
+                                    ),
+                                  ),
+                                  IconButton(
+                                    onPressed: () {
+                                      _showDeleteConfirmationDialog(
+                                        data['id']!,
+                                        data['name']!,
+                                      );
+                                    },
+                                    icon: Icon(
+                                      Icons.delete,
+                                      color: Colors.red,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        },
                       ),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(
-                            vertical: 5, horizontal: 10.0),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Expanded(
-                              child: Text(
-                                '${data['name']} - ${data['description']}',
-                                style: TextStyle(fontSize: 16),
-                              ),
-                            ),
-                            IconButton(
-                              onPressed: () {},
-                              icon: Icon(
-                                Icons.edit,
-                                color: Colors.blue,
-                              ),
-                            ),
-                            IconButton(
-                              onPressed: () {
-                                setState(() {
-                                  if (isSelected) {
-                                    _selectedResource = null;
-                                  } else {
-                                    _selectedResource = data['description'];
-                                  }
-                                });
-                              },
-                              icon: Icon(
-                                Icons.delete,
-                                color: Colors.red,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    );
-                  },
-                ),
               ),
             ],
           ),
@@ -116,8 +219,16 @@ class _TabContentResourceState extends State<TabContentResource>
           child: Align(
             alignment: Alignment.bottomCenter,
             child: ElevatedButton(
-              onPressed: () {
-                // Handle add button press
+              onPressed: () async {
+                final result = await Navigator.push(
+                  context,
+                  SlideFromRightPageRoute(
+                    page: AddResourcePage(), // Thay đổi trang thêm mới
+                  ),
+                );
+                if (result == true) {
+                  refreshList();
+                }
               },
               style: ElevatedButton.styleFrom(
                 padding: EdgeInsets.all(15),

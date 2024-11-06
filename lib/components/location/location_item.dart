@@ -152,24 +152,7 @@ class _LocationItemState extends State<LocationItem>
                                             CrossAxisAlignment.start,
                                         children: [
                                           buildDetailRow(
-                                              _selectedLocation['location'] ??
-                                                  ''),
-                                          if (_selectedLocation['description']
-                                                  ?.isNotEmpty ??
-                                              false)
-                                            Padding(
-                                              padding: const EdgeInsets.only(
-                                                  left: 24.0),
-                                              child: Text(
-                                                _selectedLocation[
-                                                        'description'] ??
-                                                    '',
-                                                style: TextStyle(
-                                                  fontSize: 14,
-                                                  color: Colors.grey[600],
-                                                ),
-                                              ),
-                                            ),
+                                              "${_selectedLocation['location'] ?? ''} ${_selectedLocation['description']?.isNotEmpty ?? false ? "- ${_selectedLocation['description']}" : ''}"),
                                         ],
                                       ),
                                     SizedBox(height: 10),

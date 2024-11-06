@@ -1,11 +1,13 @@
 class CreateEventResourceModel {
   final String? name;
   final String? description;
+  final String? id;
   final int? group;
 
   CreateEventResourceModel({
     this.name,
     this.description,
+    this.id,
     this.group,
   });
 
@@ -13,6 +15,7 @@ class CreateEventResourceModel {
     return CreateEventResourceModel(
       name: json['name'],
       description: json['description'],
+      id: json['id'],
       group: json['group'],
     );
   }

@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_calendar/components/list_card/TabCard_list.dart';
+import 'package:flutter_calendar/models/list_event_calendar_model.dart';
+import 'package:flutter_calendar/models/login_model.dart';
+import 'package:flutter_calendar/network/api_service.dart';
 import 'package:flutter_calendar/pages/addtask_manager/add_task_page.dart';
 import 'package:flutter_calendar/pages/month_boxes/bloc/month_bloc.dart';
 import 'package:flutter_calendar/pages/month_boxes/calanderToMonth.dart';
@@ -17,6 +20,7 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage>
     with SingleTickerProviderStateMixin {
+  final ApiProvider _apiProvider = ApiProvider();
   late TabController _tabController;
   String _selectedDayOfWeek =
       DateFormat('EEEE').format(DateTime.now()); // Lưu trữ thứ trong tuần
@@ -30,6 +34,8 @@ class _HomePageState extends State<HomePage>
   String _selectedFilter = 'Theo tuần';
   int morningCount = 0;
   int afternoonCount = 0;
+  String _currentCalendarType = 'unit';
+  String _selectedAcceptFilter = 'Tham gia'; // Giá trị mặc định mới
 
   @override
   void initState() {
@@ -40,7 +46,9 @@ class _HomePageState extends State<HomePage>
     _dateBloc.add(LoadData(_currentDate));
     _monthBloc.add(LoadDataToMonth(_currentDate));
     _fetchEventCounts();
-    //context.read<MonthBloc>().add(LoadDataToMonth(DateTime.now()));
+    if (mounted) {
+      setState(() {});
+    }
   }
 
   @override
@@ -52,7 +60,44 @@ class _HomePageState extends State<HomePage>
   }
 
   Future<void> _fetchEventCounts() async {
-    setState(() {});
+    final ApiProvider apiProvider = ApiProvider();
+    try {
+      List<ListEventcalendarModel>? events =
+          await apiProvider.getListEveneCalendar(User.token.toString());
+
+      if (events != null) {
+        int morning = events.where((event) {
+          if (event.from != null) {
+            DateTime eventTime =
+                DateTime.fromMillisecondsSinceEpoch(event.from!);
+            return eventTime.year == _currentDate.year &&
+                eventTime.month == _currentDate.month &&
+                eventTime.day == _currentDate.day &&
+                eventTime.hour < 12;
+          }
+          return false;
+        }).length;
+
+        int afternoon = events.where((event) {
+          if (event.from != null) {
+            DateTime eventTime =
+                DateTime.fromMillisecondsSinceEpoch(event.from!);
+            return eventTime.year == _currentDate.year &&
+                eventTime.month == _currentDate.month &&
+                eventTime.day == _currentDate.day &&
+                eventTime.hour >= 12;
+          }
+          return false;
+        }).length;
+
+        setState(() {
+          morningCount = morning;
+          afternoonCount = afternoon;
+        });
+      }
+    } catch (e) {
+      print('Error fetching event counts: $e');
+    }
   }
 
   @override
@@ -69,7 +114,13 @@ class _HomePageState extends State<HomePage>
       child: Scaffold(
         backgroundColor: Colors.white,
         appBar: _buildAppBar(),
-        drawer: CustomDrawer(),
+        drawer: CustomDrawer(
+          onCalendarTypeChanged: (String type) {
+            setState(() {
+              _currentCalendarType = type;
+            });
+          },
+        ),
         body: _buildBody(),
       ),
     );
@@ -81,11 +132,16 @@ class _HomePageState extends State<HomePage>
       leading: Builder(
         builder: (context) => IconButton(
           icon: Icon(Icons.format_list_bulleted, color: Colors.white, size: 24),
-          onPressed: () => Scaffold.of(context).openDrawer(),
+          onPressed: () {
+            Scaffold.of(context).openDrawer();
+          },
         ),
       ),
-      title:
-          Text("Lịch công tác đơn vị", style: TextStyle(color: Colors.white)),
+      title: Text(
+          _currentCalendarType == 'unit'
+              ? "Lịch công tác đơn vị"
+              : "Lịch công tác cá nhân",
+          style: TextStyle(color: Colors.white)),
       centerTitle: true,
       actions: [
         IconButton(
@@ -104,30 +160,66 @@ class _HomePageState extends State<HomePage>
         _buildDateDropdown(),
         Row(
           children: [
-            Expanded(child: SearchBarWithDropdown()),
+            // Chỉ hiển thị SearchBarWithDropdown khi ở chế độ lịch đơn vị
+            if (_currentCalendarType == 'unit')
+              Expanded(child: SearchBarWithDropdown()),
+            // Hiển thị thêm DropdownButtonFormField khi ở chế độ personal
+            if (_currentCalendarType == 'personal')
+              Expanded(child: buildDropdownButtonFormFieldAccpect()),
             Expanded(child: buildDropdownButtonFormField()),
           ],
         ),
         _buildAddTaskButtons(),
         if (_selectedFilter == 'Theo tháng')
-          _buildMonthBoxes() // Show month boxes when "Theo tháng" is selected
+          _buildMonthBoxes()
         else
-          _buildDateBoxes(), // Show date boxes when "Theo tuần" is selected
+          _buildDateBoxes(),
         if (_selectedFilter == 'Theo tháng')
-          Expanded(
-              child:
-                  _buildMonthCalendar()) // Show month calendar when "Theo tháng" is selected
+          Expanded(child: _buildMonthCalendar())
         else ...[
-          _buildTabBar(), // Show tab bar when "Theo tuần" is selected
+          _buildTabBar(),
           Expanded(child: _buildTabBarView()),
         ],
       ],
     );
   }
 
+  Widget buildDropdownButtonFormFieldAccpect() {
+    return Container(
+      margin: EdgeInsets.fromLTRB(8, 0, 8, 5),
+      child: DropdownButtonFormField<String>(
+        value: _selectedAcceptFilter, // Sử dụng biến state mới
+        items: ['Tham gia', 'Từ chối', 'Chưa xác nhận']
+            .map((filter) =>
+                DropdownMenuItem(value: filter, child: Text(filter)))
+            .toList(),
+        onChanged: (value) {
+          setState(() {
+            _selectedAcceptFilter =
+                value ?? 'Tham gia'; // Cập nhật biến state mới
+          });
+        },
+        decoration: InputDecoration(
+          isDense: true, // Giảm khoảng cách bên trong để thu gọn chiều cao
+          contentPadding: EdgeInsets.symmetric(
+              vertical: 12, horizontal: 8), // Điều chỉnh padding
+          fillColor: Colors.white,
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(10),
+            borderSide: BorderSide(color: Colors.grey),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(10),
+            borderSide: BorderSide(color: Colors.black),
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget buildDropdownButtonFormField() {
     return Container(
-      margin: EdgeInsets.only(right: 8), // Thêm margin bên phải
+      margin: EdgeInsets.fromLTRB(0, 3, 8, 5),
       child: DropdownButtonFormField<String>(
         value: _selectedFilter,
         items: ['Theo tuần', 'Theo tháng']
@@ -145,10 +237,13 @@ class _HomePageState extends State<HomePage>
           });
         },
         decoration: InputDecoration(
-          fillColor: Colors.white, // Màu nền của ô dropdown
+          isDense: true, // Giảm khoảng cách bên trong để thu gọn chiều cao
+          contentPadding: EdgeInsets.symmetric(
+              vertical: 12, horizontal: 12), // Điều chỉnh padding
+          fillColor: Colors.white,
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(10),
-            borderSide: BorderSide(color: Colors.grey), // Màu viền
+            borderSide: BorderSide(color: Colors.grey),
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(10),
@@ -168,7 +263,23 @@ class _HomePageState extends State<HomePage>
           children: [
             BlocBuilder<MonthBloc, MonthBlocState>(
               builder: (context, state) {
-                return CalendarWidget(selectedDate: state.selectedDate);
+                return CalendarWidget(
+                  selectedDate: state.selectedDate,
+                  onDaySelected: (DateTime selectedDate) {
+                    setState(() {
+                      // Chuyển sang chế độ xem theo tuần
+                      _selectedFilter = 'Theo tuần';
+
+                      // Cập nhật ngày được chọn
+                      _currentDate = selectedDate;
+
+                      // Cập nhật UI
+                      _updateSelectedMonthAndDayOfWeek(selectedDate);
+                      _dateBloc.add(LoadData(selectedDate));
+                      _fetchEventCounts();
+                    });
+                  },
+                );
               },
             ),
           ],
@@ -400,8 +511,20 @@ class _HomePageState extends State<HomePage>
           if (state.daysList.isEmpty) {
             return Center(child: CircularProgressIndicator());
           }
+
+          // Điều chỉnh itemWidth để tính cả padding
           final screenWidth = MediaQuery.of(context).size.width;
-          final itemWidth = (screenWidth - 32) / state.daysList.length;
+          final totalPadding =
+              (state.daysList.length - 1) * 4; // Tổng padding giữa các ô
+          final itemWidth =
+              (screenWidth - 32 - totalPadding) / state.daysList.length;
+
+          int selectedIndex = state.daysList.indexWhere((day) {
+            final date = DateFormat('dd/MM/yyyy').parse(day['date']!);
+            return DateFormat('dd/MM/yyyy').format(date) ==
+                DateFormat('dd/MM/yyyy').format(_currentDate);
+          });
+
           return GestureDetector(
             onHorizontalDragEnd: (details) {
               if (details.primaryVelocity! < 0) {
@@ -410,36 +533,68 @@ class _HomePageState extends State<HomePage>
                 _changeWeek(-1);
               }
             },
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: state.daysList.map((day) {
-                final date = DateFormat('dd/MM/yyyy').parse(day['date']!);
-                final isToday = day['date'] ==
-                    DateFormat('dd/MM/yyyy').format(DateTime.now());
-                final isSelected = date == _currentDate;
-                return GestureDetector(
-                  onTap: () => _updateSelectedDate(date),
-                  child: Container(
-                    width: itemWidth,
-                    padding: EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: isSelected
-                          ? Colors.blue
-                          : (isToday ? Colors.yellow : Colors.white),
-                      border: Border.all(color: Colors.grey),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(day['dayOfWeek']!,
-                            style: TextStyle(fontWeight: FontWeight.bold)),
-                        Text(day['dayMonth']!),
-                      ],
-                    ),
-                  ),
-                );
-              }).toList(),
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              controller: ScrollController(
+                initialScrollOffset:
+                    selectedIndex > 0 ? selectedIndex * (itemWidth + 4) : 0,
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: state.daysList.asMap().entries.map((entry) {
+                  final day = entry.value;
+                  final index = entry.key;
+                  final date = DateFormat('dd/MM/yyyy').parse(day['date']!);
+                  final isToday = day['date'] ==
+                      DateFormat('dd/MM/yyyy').format(DateTime.now());
+                  final isSelected = DateFormat('dd/MM/yyyy').format(date) ==
+                      DateFormat('dd/MM/yyyy').format(_currentDate);
+
+                  return Row(
+                    children: [
+                      GestureDetector(
+                        onTap: () => _updateSelectedDate(date),
+                        child: Container(
+                          width: itemWidth,
+                          padding: EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: isSelected
+                                ? Colors.blue
+                                : (isToday ? Colors.yellow : Colors.white),
+                            border: Border.all(
+                              color: isSelected ? Colors.blue : Colors.grey,
+                              width: isSelected ? 2 : 1,
+                            ),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                day['dayOfWeek']!,
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color:
+                                      isSelected ? Colors.white : Colors.black,
+                                ),
+                              ),
+                              Text(
+                                day['dayMonth']!,
+                                style: TextStyle(
+                                  color:
+                                      isSelected ? Colors.white : Colors.black,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      // Thêm SizedBox với width 4px giữa các ô, trừ ô cuối cùng
+                      if (index < state.daysList.length - 1) SizedBox(width: 6),
+                    ],
+                  );
+                }).toList(),
+              ),
             ),
           );
         },

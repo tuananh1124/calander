@@ -49,6 +49,31 @@ class ApiProvider {
     }
   }
 
+  // DELETE request with error handling
+  Future<Response> deleteConnect(String url, String token) async {
+    var headers = {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer $token',
+    };
+    try {
+      return await delete(Uri.parse(url), headers: headers);
+    } catch (e) {
+      throw e.toString();
+    }
+  }
+
+  Future<Response> putConnect(String url, String body, String token) async {
+    var headers = {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer $token',
+    };
+    try {
+      return await put(Uri.parse(url), headers: headers, body: body);
+    } catch (e) {
+      throw e.toString();
+    }
+  }
+
   Future<LoginModel?> login(
       String username, String password, String token) async {
     var postData = {'username': username, 'password': password};
@@ -335,30 +360,74 @@ class ApiProvider {
       'name': name,
       'description': description,
       'group': group,
-      'type': type, // Thêm trường type
-      'organizationId': organizationId, // Thêm trường organizationId
+      'type': type,
+      'organizationId': organizationId,
     };
 
     try {
       final response =
           await postConnect(createEventResourceAPI, postData, token);
-      print('Response Status Code: ${response.statusCode}');
-      var decodedBody = utf8.decode(response.bodyBytes);
-      print('Response Body: $decodedBody');
 
       if (response.statusCode == statusOk) {
-        var responseData = jsonDecode(decodedBody);
+        var responseData = jsonDecode(utf8.decode(response.bodyBytes));
+        // Lấy data từ key "result"
         var result = responseData['result'];
-        CreateEventResourceModel model =
-            CreateEventResourceModel.fromJson(result);
-        return model;
-      } else {
-        print(
-            'Create Event Resource API failed with status: ${response.statusCode}');
-        return null;
+        return CreateEventResourceModel.fromJson(result);
       }
+      return null;
     } catch (e) {
-      print('Error occurred: $e');
+      print('Error: $e');
+      return null;
+    }
+  }
+
+  Future<bool> deleteEventCalendar(String id, String token) async {
+    try {
+      // Tạo URL động bằng cách thay thế {id} với id thực tế
+      String url = '$serverURL/website/event-resource/$id';
+
+      final response = await deleteConnect(url, token);
+
+      if (response.statusCode == statusOk) {
+        // Trả về true nếu xóa thành công
+        return true;
+      }
+      return false;
+    } catch (e) {
+      print('Error: $e');
+      return false;
+    }
+  }
+
+  Future<CreateEventResourceModel?> updateEventResource({
+    required String id,
+    required String name,
+    required String description,
+    required String token,
+  }) async {
+    final String updateUrl = '$serverURL/website/event-resource/$id';
+
+    var postData = {
+      'name': name,
+      'description': description,
+      'group': 0,
+    };
+
+    try {
+      final response = await putConnect(
+        updateUrl,
+        jsonEncode(postData),
+        token,
+      );
+
+      if (response.statusCode == statusOk) {
+        var responseData = jsonDecode(utf8.decode(response.bodyBytes));
+        var result = responseData['result'];
+        return CreateEventResourceModel.fromJson(result);
+      }
+      return null;
+    } catch (e) {
+      print('Error: $e');
       return null;
     }
   }

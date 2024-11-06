@@ -26,33 +26,64 @@ class _AddLocationPageState extends State<AddLocationPage> {
 
   @override
   void dispose() {
+    // Chỉ cần dispose các controller
+    diadiemController.dispose();
+    ghichuController.dispose();
     super.dispose();
-    createEventResource();
   }
 
   Future<void> createEventResource() async {
-    String name = "abc";
-    String description = "abc";
-    int group = 0;
-    String type = ""; // Giá trị cho trường type
-    String organizationId = ""; // Giá trị cho trường organizationId
+    if (!mounted) return;
 
+    String name = diadiemController.text;
+    String description = ghichuController.text;
+
+    if (name.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Vui lòng nhập tên vị trí')),
+      );
+      return;
+    }
+
+    int group = 0;
+    String type = "organization";
+    String organizationId = "605b064ad9b8222a8db47eb8";
     String token = User.token.toString();
 
-    CreateEventResourceModel? createEvent =
-        await _apiProvider.createEventResource(
-      name,
-      description,
-      group,
-      type,
-      organizationId,
-      token,
-    );
+    try {
+      CreateEventResourceModel? result = await _apiProvider.createEventResource(
+        name,
+        description,
+        group,
+        type,
+        organizationId,
+        token,
+      );
 
-    if (createEvent != null) {
-      print("Event created successfully: ${createEvent.name}");
-    } else {
-      print("Failed to create event");
+      if (!mounted) return;
+
+      if (result != null) {
+        print("Tạo địa điểm thành công:");
+        print("Tên: ${result.name}");
+        print("Mô tả: ${result.description}");
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Tạo địa điểm thành công')),
+        );
+
+        // Pop và trả về true để báo hiệu thêm thành công
+        Navigator.pop(context, true);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Tạo địa điểm thất bại')),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Có lỗi xảy ra: $e')),
+      );
     }
   }
 
@@ -72,11 +103,9 @@ class _AddLocationPageState extends State<AddLocationPage> {
                   color: Colors.white, size: 16),
               onPressed: () => Navigator.of(context).pop(),
             ),
-            title: Container(
-              child: Text(
-                'Thêm địa điểm',
-                style: TextStyle(color: Colors.white, fontSize: 20),
-              ),
+            title: Text(
+              'Thêm địa điểm',
+              style: TextStyle(color: Colors.white, fontSize: 20),
             ),
           ),
           backgroundColor: Colors.white,
@@ -95,7 +124,7 @@ class _AddLocationPageState extends State<AddLocationPage> {
                     ),
                   ],
                 ),
-                const SizedBox(height: 10), // Thêm khoảng cách giữa các ô nhập
+                const SizedBox(height: 10),
                 Row(
                   children: [
                     Expanded(
@@ -107,9 +136,7 @@ class _AddLocationPageState extends State<AddLocationPage> {
                     ),
                   ],
                 ),
-
                 const SizedBox(height: 15),
-
                 Row(
                   children: [
                     Expanded(
@@ -117,7 +144,7 @@ class _AddLocationPageState extends State<AddLocationPage> {
                         fontsize: 20,
                         paddingText: 10,
                         text: 'Lưu',
-                        onTap: () {}, // Gọi hàm _submitShift
+                        onTap: createEventResource,
                       ),
                     ),
                   ],

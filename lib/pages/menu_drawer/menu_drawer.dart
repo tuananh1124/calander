@@ -1,11 +1,16 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_calendar/models/list_sub_organization_model.dart';
 import 'package:flutter_calendar/models/login_model.dart';
 import 'package:flutter_calendar/models/type_calendar_model.dart';
 import 'package:flutter_calendar/network/api_service.dart';
 import 'package:flutter_calendar/pages/login/logintab.dart';
 
 class CustomDrawer extends StatefulWidget {
+  static String selectedCalendarType = 'unit';
+  final Function(String) onCalendarTypeChanged;
+
+  const CustomDrawer({Key? key, required this.onCalendarTypeChanged})
+      : super(key: key);
+// Thêm biến static
   @override
   _CustomDrawerState createState() => _CustomDrawerState();
 }
@@ -87,7 +92,7 @@ class _CustomDrawerState extends State<CustomDrawer> {
                   ListTile(
                     leading: Icon(Icons.apartment, color: Colors.blue),
                     title: Text(
-                      _typeCalendarList![0].name ?? '', // Sử dụng tên từ model
+                      _typeCalendarList![0].name ?? '',
                       style: TextStyle(
                         fontWeight: FontWeight.normal,
                         color: Colors.black,
@@ -95,6 +100,7 @@ class _CustomDrawerState extends State<CustomDrawer> {
                     ),
                     tileColor: Colors.white,
                     onTap: () {
+                      widget.onCalendarTypeChanged('unit');
                       Navigator.pop(context);
                     },
                   ),
@@ -102,7 +108,7 @@ class _CustomDrawerState extends State<CustomDrawer> {
                   ListTile(
                     leading: Icon(Icons.person, color: Colors.blue),
                     title: Text(
-                      _typeCalendarList![1].name ?? '', // Sử dụng tên từ model
+                      _typeCalendarList![1].name ?? '',
                       style: TextStyle(
                         fontWeight: FontWeight.normal,
                         color: Colors.black,
@@ -110,6 +116,7 @@ class _CustomDrawerState extends State<CustomDrawer> {
                     ),
                     tileColor: Colors.white,
                     onTap: () {
+                      widget.onCalendarTypeChanged('personal');
                       Navigator.pop(context);
                     },
                   ),
