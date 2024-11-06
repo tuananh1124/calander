@@ -5,7 +5,7 @@ import 'package:flutter_calendar/network/api_service.dart';
 import 'package:flutter_calendar/pages/login/logintab.dart';
 
 class CustomDrawer extends StatefulWidget {
-  static String selectedCalendarType = 'unit';
+  static String selectedCalendarType = 'organization';
   final Function(String) onCalendarTypeChanged;
 
   const CustomDrawer({Key? key, required this.onCalendarTypeChanged})
@@ -100,7 +100,7 @@ class _CustomDrawerState extends State<CustomDrawer> {
                     ),
                     tileColor: Colors.white,
                     onTap: () {
-                      widget.onCalendarTypeChanged('unit');
+                      widget.onCalendarTypeChanged('organization');
                       Navigator.pop(context);
                     },
                   ),

@@ -2,15 +2,27 @@ import 'package:flutter/material.dart';
 import 'package:flutter_calendar/pages/resource_manager/tab_resource/content_location_tab.dart';
 import 'package:flutter_calendar/pages/resource_manager/tab_resource/content_resourc_tab.dart';
 
-class ResourceManagementPage extends StatelessWidget {
+class ResourceManagementPage extends StatefulWidget {
+  final String calendarType; // Thêm tham số này
+
+  const ResourceManagementPage({
+    Key? key,
+    required this.calendarType,
+  }) : super(key: key);
+  @override
+  _ResourceManagementPageState createState() => _ResourceManagementPageState();
+}
+
+class _ResourceManagementPageState extends State<ResourceManagementPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Quản lý danh mục'),
+        title: Text(widget.calendarType == 'organization'
+            ? 'Quản lý danh mục đơn vị'
+            : 'Quản lý danh mục cá nhân'),
         backgroundColor: Colors.blue,
-        foregroundColor:
-            Colors.white, // Thay đổi màu chữ của các phần tử trong AppBar
+        foregroundColor: Colors.white,
       ),
       body: Padding(
         padding: MediaQuery.of(context).viewInsets,
@@ -20,7 +32,7 @@ class ResourceManagementPage extends StatelessWidget {
             children: [
               Container(
                 height: 50,
-                color: Colors.blue, // Đặt màu nền cho TabBar
+                color: Colors.blue,
                 child: const TabBar(
                   indicatorColor: Colors.white,
                   indicator: BoxDecoration(
@@ -45,8 +57,8 @@ class ResourceManagementPage extends StatelessWidget {
               Expanded(
                 child: TabBarView(
                   children: [
-                    TabContentLocation(),
-                    TabContentResource(),
+                    TabContentLocation(calendarType: widget.calendarType),
+                    TabContentResource(calendarType: widget.calendarType),
                   ],
                 ),
               ),

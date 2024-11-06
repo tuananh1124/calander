@@ -20,9 +20,13 @@ const String getListRootOrganizationAPI =
 
 const String getListEventResourceAPI =
     '$serverURL/website/event-resource?organizationId=605b064ad9b8222a8db47eb8';
+const String getListOfPersonalEventResourceAPI =
+    '$serverURL/website/event-resource/list-of-personal?organizationId=605b064ad9b8222a8db47eb8';
 
 // create
 const String createEventResourceAPI = '$serverURL/website/event-resource';
+const String createEventResource_PersonalAPI =
+    '$serverURL/website/event-resource';
 
 const String createEventCalendarAPI = '$serverURL/website/event-calendar';
 

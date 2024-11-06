@@ -290,6 +290,35 @@ class ApiProvider {
     return null; // Return null in case of an error or unexpected response
   }
 
+  Future<List<ListEventResourceModel>?> getListOfPersonalEventResource(
+      String token) async {
+    try {
+      final response =
+          await getConnect(getListOfPersonalEventResourceAPI, token);
+      var decodedBody = utf8.decode(response.bodyBytes);
+
+      if (response.statusCode == statusOk) {
+        var responseData = jsonDecode(decodedBody);
+
+        if (responseData is Map && responseData.containsKey('result')) {
+          var listData = responseData['result'];
+
+          if (listData is List) {
+            List<ListEventResourceModel> modelList = listData
+                .map((item) => ListEventResourceModel.fromJson(item))
+                .toList();
+            return modelList;
+          }
+        }
+      } else {
+        print('Error: Unexpected status code ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Error fetching event resources: $e');
+    }
+    return null; // Return null in case of an error or unexpected response
+  }
+
   Future<CreateEventCalendarModel?> createEventCalendar(
       String token, CreateEventCalendarModel eventDetails) async {
     var postData = {
@@ -367,6 +396,38 @@ class ApiProvider {
     try {
       final response =
           await postConnect(createEventResourceAPI, postData, token);
+
+      if (response.statusCode == statusOk) {
+        var responseData = jsonDecode(utf8.decode(response.bodyBytes));
+        // Lấy data từ key "result"
+        var result = responseData['result'];
+        return CreateEventResourceModel.fromJson(result);
+      }
+      return null;
+    } catch (e) {
+      print('Error: $e');
+      return null;
+    }
+  }
+
+  Future<CreateEventResourceModel?> createEventResource_Personal(
+      String name,
+      String description,
+      int group,
+      String type,
+      String organizationId,
+      String token) async {
+    var postData = {
+      'name': name,
+      'description': description,
+      'group': group,
+      'type': type,
+      'organizationId': organizationId,
+    };
+
+    try {
+      final response =
+          await postConnect(createEventResource_PersonalAPI, postData, token);
 
       if (response.statusCode == statusOk) {
         var responseData = jsonDecode(utf8.decode(response.bodyBytes));

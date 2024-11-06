@@ -5,7 +5,13 @@ import 'package:flutter_calendar/components/resource/resource_list.dart';
 
 class ResourceItem extends StatefulWidget {
   final String resource;
-  const ResourceItem({super.key, required this.resource});
+  final String calendarType; // Thêm property này
+
+  const ResourceItem({
+    super.key,
+    required this.resource,
+    required this.calendarType, // Thêm parameter này
+  });
 
   @override
   State<ResourceItem> createState() => _ResourceItemState();
@@ -128,16 +134,22 @@ class _ResourceItemState extends State<ResourceItem>
                                               borderRadius:
                                                   BorderRadius.circular(10),
                                               onTap: () {
-                                                Navigator.of(context).push(
-                                                  SlideFromRightPageRoute(
-                                                    page: ResourceList(
+                                                Navigator.push(
+                                                  context,
+                                                  MaterialPageRoute(
+                                                    builder: (context) =>
+                                                        ResourceList(
                                                       onItemSelectedResource:
                                                           _onItemSelectedResource,
                                                       selectedResourceIds:
                                                           _selectedResources
-                                                              .map((r) =>
-                                                                  r['id'] ?? '')
+                                                              .map((resource) =>
+                                                                  resource[
+                                                                      'id'] ??
+                                                                  '')
                                                               .toList(),
+                                                      calendarType: widget
+                                                          .calendarType, // Sử dụng widget.calendarType
                                                     ),
                                                   ),
                                                 );

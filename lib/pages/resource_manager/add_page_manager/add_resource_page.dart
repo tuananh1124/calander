@@ -6,8 +6,11 @@ import 'package:flutter_calendar/pages/login/compoments/my_button.dart';
 import 'package:flutter_calendar/pages/login/compoments/my_textfield.dart';
 
 class AddResourcePage extends StatefulWidget {
+  final String calendarType; // Add calendar type parameter
+
   const AddResourcePage({
     Key? key,
+    required this.calendarType, // Make it required
   }) : super(key: key);
 
   @override
@@ -18,16 +21,9 @@ class _AddResourcePageState extends State<AddResourcePage> {
   TextEditingController tainguyenController = TextEditingController();
   TextEditingController ghichuController = TextEditingController();
   final ApiProvider _apiProvider = ApiProvider();
-  //String selectedType = "unit";
-
-  @override
-  void initState() {
-    super.initState();
-  }
 
   @override
   void dispose() {
-    // Chỉ cần dispose các controller
     tainguyenController.dispose();
     ghichuController.dispose();
     super.dispose();
@@ -41,33 +37,39 @@ class _AddResourcePageState extends State<AddResourcePage> {
 
     if (name.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Vui lòng nhập tên vị trí')),
-      );
-      return;
-    }
-
-    // Kiểm tra xem có organizationId không
-    if (name.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Vui lòng nhập tên tài nguyên')),
       );
       return;
     }
 
     int group = 1;
-    String type = "organization";
+    String type = widget.calendarType; // Use the calendar type from widget
     String organizationId = "605b064ad9b8222a8db47eb8";
     String token = User.token.toString();
 
     try {
-      CreateEventResourceModel? result = await _apiProvider.createEventResource(
-        name,
-        description,
-        group,
-        type,
-        organizationId,
-        token,
-      );
+      CreateEventResourceModel? result;
+
+      // Check calendar type and call appropriate API
+      if (widget.calendarType == 'organization') {
+        result = await _apiProvider.createEventResource(
+          name,
+          description,
+          group,
+          type,
+          organizationId,
+          token,
+        );
+      } else {
+        result = await _apiProvider.createEventResource_Personal(
+          name,
+          description,
+          group,
+          type,
+          organizationId,
+          token,
+        );
+      }
 
       if (!mounted) return;
 
@@ -112,7 +114,9 @@ class _AddResourcePageState extends State<AddResourcePage> {
               onPressed: () => Navigator.of(context).pop(),
             ),
             title: Text(
-              'Thêm tài nguyên',
+              widget.calendarType == 'organization'
+                  ? 'Thêm tài nguyên đơn vị'
+                  : 'Thêm tài nguyên cá nhân',
               style: TextStyle(color: Colors.white, fontSize: 20),
             ),
           ),

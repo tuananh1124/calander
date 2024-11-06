@@ -6,11 +6,13 @@ import 'package:flutter_calendar/network/api_service.dart';
 class ResourceList extends StatefulWidget {
   final Function(List<Map<String, String>>) onItemSelectedResource;
   final List<String> selectedResourceIds;
+  final String calendarType; // Thêm property này
 
   const ResourceList({
     Key? key,
     required this.onItemSelectedResource,
     required this.selectedResourceIds,
+    required this.calendarType, // Thêm parameter này
   }) : super(key: key);
 
   @override
@@ -20,7 +22,7 @@ class ResourceList extends StatefulWidget {
 class _ResourceListState extends State<ResourceList> {
   final List<Map<String, String>> dataListResource = [];
   final ApiProvider _apiProvider = ApiProvider();
-  List<String> _selectedResourceIds = []; // Thay đổi thành list
+  List<String> _selectedResourceIds = [];
   List<Map<String, String>> _filteredDataListResource = [];
   final TextEditingController _searchController = TextEditingController();
 
@@ -33,25 +35,43 @@ class _ResourceListState extends State<ResourceList> {
     _fetchResourceData();
   }
 
-  // Lấy dữ liệu tài nguyên từ API
   Future<void> _fetchResourceData() async {
-    List<ListEventResourceModel>? listEvent =
-        await _apiProvider.getListEventResource(User.token.toString());
+    try {
+      List<ListEventResourceModel>? listEvent;
+      if (widget.calendarType == 'organization') {
+        listEvent =
+            await _apiProvider.getListEventResource(User.token.toString());
+      } else {
+        listEvent = await _apiProvider
+            .getListOfPersonalEventResource(User.token.toString());
+      }
 
-    if (listEvent != null) {
-      setState(() {
-        dataListResource.clear();
-        // Lọc và chuyển đổi dữ liệu cho tài nguyên (group == 1)
-        dataListResource
-            .addAll(listEvent.where((item) => item.group == 1).map((item) {
-          return {
-            'id': item.id.toString(),
-            'resource': item.name ?? '',
-            'description': item.description ?? '',
-          };
-        }).toList());
-        _filteredDataListResource = List.from(dataListResource);
-      });
+      print('List Event: $listEvent'); // Debug print
+
+      if (listEvent != null) {
+        final filteredList = listEvent.where((item) {
+          print('Item group: ${item.group}'); // Debug print
+          return item.group != null && item.group == 1;
+        }).toList();
+
+        print('Filtered List: $filteredList'); // Debug print
+
+        setState(() {
+          dataListResource.clear();
+          dataListResource.addAll(
+            filteredList
+                .map((item) => {
+                      'id': item.id ?? '',
+                      'resource': item.name ?? '',
+                      'description': item.description ?? '',
+                    })
+                .toList(),
+          );
+          _filteredDataListResource = List.from(dataListResource);
+        });
+      }
+    } catch (e) {
+      print('Error in _fetchResourceData: $e');
     }
   }
 
@@ -61,7 +81,6 @@ class _ResourceListState extends State<ResourceList> {
     super.dispose();
   }
 
-  // Lọc tài nguyên theo từ khóa tìm kiếm
   void _filterResource() {
     final query = _searchController.text.toLowerCase();
     setState(() {
@@ -83,7 +102,6 @@ class _ResourceListState extends State<ResourceList> {
         leading: IconButton(
           icon: Icon(Icons.arrow_back_ios_new_outlined, size: 16),
           onPressed: () {
-            // Trả về danh sách các item đã chọn
             List<Map<String, String>> selectedItems = _filteredDataListResource
                 .where((item) => _selectedResourceIds.contains(item['id']))
                 .toList();
@@ -91,7 +109,9 @@ class _ResourceListState extends State<ResourceList> {
             Navigator.of(context).pop();
           },
         ),
-        title: Text('Chọn tài nguyên'),
+        title: Text(widget.calendarType == 'organization'
+            ? 'Chọn tài nguyên đơn vị'
+            : 'Chọn tài nguyên cá nhân'),
         backgroundColor: Colors.blue,
       ),
       body: GestureDetector(
@@ -106,7 +126,6 @@ class _ResourceListState extends State<ResourceList> {
     );
   }
 
-  // Widget thanh tìm kiếm
   Widget _buildSearchBar() {
     return Padding(
       padding: const EdgeInsets.all(8.0),
@@ -133,7 +152,6 @@ class _ResourceListState extends State<ResourceList> {
     );
   }
 
-  // Widget danh sách tài nguyên
   Widget _buildResourceList() {
     return ListView.builder(
       itemCount: _filteredDataListResource.length,
@@ -155,10 +173,8 @@ class _ResourceListState extends State<ResourceList> {
               onPressed: () {
                 setState(() {
                   if (isSelected) {
-                    // Hủy chọn
                     _selectedResourceIds.remove(data['id']);
                   } else {
-                    // Chọn mới
                     _selectedResourceIds.add(data['id'] ?? '');
                   }
                 });

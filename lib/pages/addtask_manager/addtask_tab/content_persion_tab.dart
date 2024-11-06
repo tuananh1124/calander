@@ -5,6 +5,12 @@ import 'package:flutter_calendar/components/resource/resource_item.dart';
 import 'package:flutter_calendar/components/list_user/user_item.dart';
 
 class TabContentPerson extends StatefulWidget {
+  final String calendarType;
+
+  const TabContentPerson({
+    Key? key,
+    required this.calendarType,
+  }) : super(key: key);
   @override
   _TabContentPersonState createState() => _TabContentPersonState();
 }
@@ -59,7 +65,11 @@ class _TabContentPersonState extends State<TabContentPerson>
                 ],
               ),
               SizedBox(height: 10),
-              LocationItem(location: 'Địa điểm'),
+              // Trong TabContentPerson
+              LocationItem(
+                location: 'Địa điểm',
+                calendarType: widget.calendarType, // Truyền từ AddTaskPage
+              ),
               Row(
                 children: [
                   Text(
@@ -69,7 +79,10 @@ class _TabContentPersonState extends State<TabContentPerson>
                 ],
               ),
               SizedBox(height: 10),
-              ResourceItem(resource: 'Tài nguyên'),
+              ResourceItem(
+                resource: 'Tài nguyên',
+                calendarType: widget.calendarType,
+              ),
             ],
           ),
         ),

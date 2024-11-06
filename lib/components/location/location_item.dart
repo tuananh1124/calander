@@ -5,7 +5,13 @@ import 'package:flutter_calendar/components/location/location_list.dart';
 
 class LocationItem extends StatefulWidget {
   final String location;
-  const LocationItem({super.key, required this.location});
+  final String calendarType; // Thêm property này
+
+  const LocationItem({
+    super.key,
+    required this.location,
+    required this.calendarType, // Thêm parameter này
+  });
 
   @override
   State<LocationItem> createState() => _LocationItemState();
@@ -177,7 +183,9 @@ class _LocationItemState extends State<LocationItem>
                                                           _onItemSelectedLocation,
                                                       selectedLocationId:
                                                           _selectedLocation[
-                                                              'id'], // Truyền id đã chọn
+                                                              'id'],
+                                                      calendarType: widget
+                                                          .calendarType, // Truyền calendarType
                                                     ),
                                                   ),
                                                 );

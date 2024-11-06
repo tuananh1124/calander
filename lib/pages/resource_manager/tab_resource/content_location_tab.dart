@@ -7,6 +7,12 @@ import 'package:flutter_calendar/pages/resource_manager/add_page_manager/add_loc
 import 'package:flutter_calendar/pages/resource_manager/edit_manager/edit_location_page.dart';
 
 class TabContentLocation extends StatefulWidget {
+  final String calendarType;
+
+  const TabContentLocation({
+    Key? key,
+    required this.calendarType,
+  }) : super(key: key);
   @override
   _TabContentLocationState createState() => _TabContentLocationState();
 }
@@ -28,21 +34,51 @@ class _TabContentLocationState extends State<TabContentLocation>
   }
 
   Future<void> ListEventResource() async {
-    List<ListEventResourceModel>? ListEvent =
-        await _apiProvider.getListEventResource(User.token.toString());
+    List<ListEventResourceModel>? ListEvent;
+    String token = User.token.toString();
 
-    if (ListEvent != null) {
-      setState(() {
-        _filteredDataListLocation =
+    try {
+      // Fetch data based on calendar type
+      ListEvent = widget.calendarType == 'organization'
+          ? await _apiProvider.getListEventResource(token)
+          : await _apiProvider.getListOfPersonalEventResource(token);
+
+      if (ListEvent != null) {
+        // Filter and process the data
+        var filteredData =
             ListEvent.where((item) => item.group == 0).map((item) {
           return {
-            'id': item.id ?? '', // Thêm id vào đây
+            'id': item.id ?? '',
             'name': item.name ?? '',
             'description': item.description ?? '',
           };
         }).toList();
-      });
+
+        if (mounted) {
+          setState(() {
+            _filteredDataListLocation = filteredData;
+          });
+        }
+      } else {
+        // Handle null data case
+        if (mounted) {
+          _showErrorSnackBar('Không thể tải danh sách địa điểm');
+        }
+      }
+    } catch (e) {
+      // Handle error case
+      if (mounted) {
+        _showErrorSnackBar('Có lỗi xảy ra khi tải danh sách: $e');
+        print('Error in ListEventResource: $e');
+      }
     }
+  }
+
+  // Helper method to show error messages
+  void _showErrorSnackBar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
+    );
   }
 
   Future<void> _deleteLocation(String id) async {
@@ -224,7 +260,9 @@ class _TabContentLocationState extends State<TabContentLocation>
                 final result = await Navigator.push(
                   context,
                   SlideFromRightPageRoute(
-                    page: AddLocationPage(),
+                    page: AddLocationPage(
+                      calendarType: widget.calendarType,
+                    ),
                   ),
                 );
                 if (result == true) {

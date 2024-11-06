@@ -6,8 +6,11 @@ import 'package:flutter_calendar/pages/login/compoments/my_button.dart';
 import 'package:flutter_calendar/pages/login/compoments/my_textfield.dart';
 
 class AddLocationPage extends StatefulWidget {
+  final String calendarType; // Thêm tham số này
+
   const AddLocationPage({
     Key? key,
+    required this.calendarType,
   }) : super(key: key);
 
   @override
@@ -46,19 +49,21 @@ class _AddLocationPageState extends State<AddLocationPage> {
     }
 
     int group = 0;
-    String type = "organization";
+    String type = widget.calendarType; // Sử dụng calendarType được truyền vào
     String organizationId = "605b064ad9b8222a8db47eb8";
     String token = User.token.toString();
 
     try {
-      CreateEventResourceModel? result = await _apiProvider.createEventResource(
-        name,
-        description,
-        group,
-        type,
-        organizationId,
-        token,
-      );
+      CreateEventResourceModel? result;
+
+      // Kiểm tra loại lịch và gọi API tương ứng
+      if (widget.calendarType == 'organization') {
+        result = await _apiProvider.createEventResource(
+            name, description, group, type, organizationId, token);
+      } else {
+        result = await _apiProvider.createEventResource_Personal(
+            name, description, group, type, organizationId, token);
+      }
 
       if (!mounted) return;
 
@@ -71,7 +76,6 @@ class _AddLocationPageState extends State<AddLocationPage> {
           SnackBar(content: Text('Tạo địa điểm thành công')),
         );
 
-        // Pop và trả về true để báo hiệu thêm thành công
         Navigator.pop(context, true);
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -104,7 +108,9 @@ class _AddLocationPageState extends State<AddLocationPage> {
               onPressed: () => Navigator.of(context).pop(),
             ),
             title: Text(
-              'Thêm địa điểm',
+              widget.calendarType == 'organization'
+                  ? 'Thêm địa điểm đơn vị'
+                  : 'Thêm địa điểm cá nhân',
               style: TextStyle(color: Colors.white, fontSize: 20),
             ),
           ),

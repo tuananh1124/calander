@@ -34,7 +34,7 @@ class _HomePageState extends State<HomePage>
   String _selectedFilter = 'Theo tuần';
   int morningCount = 0;
   int afternoonCount = 0;
-  String _currentCalendarType = 'unit';
+  String _currentCalendarType = 'organization';
   String _selectedAcceptFilter = 'Tham gia'; // Giá trị mặc định mới
 
   @override
@@ -138,7 +138,7 @@ class _HomePageState extends State<HomePage>
         ),
       ),
       title: Text(
-          _currentCalendarType == 'unit'
+          _currentCalendarType == 'organization'
               ? "Lịch công tác đơn vị"
               : "Lịch công tác cá nhân",
           style: TextStyle(color: Colors.white)),
@@ -161,7 +161,7 @@ class _HomePageState extends State<HomePage>
         Row(
           children: [
             // Chỉ hiển thị SearchBarWithDropdown khi ở chế độ lịch đơn vị
-            if (_currentCalendarType == 'unit')
+            if (_currentCalendarType == 'organization')
               Expanded(child: SearchBarWithDropdown()),
             // Hiển thị thêm DropdownButtonFormField khi ở chế độ personal
             if (_currentCalendarType == 'personal')
@@ -482,7 +482,11 @@ class _HomePageState extends State<HomePage>
               mainAxisSize: MainAxisSize.min,
               children: [
                 Icon(Icons.add, color: Colors.white),
-                Text("Add task", style: TextStyle(color: Colors.white)),
+                Text(
+                    _currentCalendarType == 'organization'
+                        ? "Add task"
+                        : "Add task",
+                    style: TextStyle(color: Colors.white)),
               ],
             ),
           ),
@@ -493,7 +497,10 @@ class _HomePageState extends State<HomePage>
               mainAxisSize: MainAxisSize.min,
               children: [
                 Icon(Icons.manage_accounts, color: Colors.white),
-                Text("Quản lí tài nguyên",
+                Text(
+                    _currentCalendarType == 'organization'
+                        ? "Quản lý danh mục"
+                        : "Quản lý danh mục",
                     style: TextStyle(color: Colors.white)),
               ],
             ),
@@ -757,14 +764,21 @@ class _HomePageState extends State<HomePage>
   void _navigateToAddTaskPage(BuildContext context) {
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => AddTaskPage()),
+      MaterialPageRoute(
+          builder: (context) => AddTaskPage(
+                calendarType: _currentCalendarType,
+              )),
     );
   }
 
   void _navigateToResourceManagementPage(BuildContext context) {
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => ResourceManagementPage()),
+      MaterialPageRoute(
+        builder: (context) => ResourceManagementPage(
+          calendarType: _currentCalendarType, // Truyền loại lịch hiện tại
+        ),
+      ),
     );
   }
 

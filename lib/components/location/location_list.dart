@@ -4,14 +4,15 @@ import 'package:flutter_calendar/models/login_model.dart';
 import 'package:flutter_calendar/network/api_service.dart';
 
 class LocationList extends StatefulWidget {
-  final Function(Map<String, String>?)
-      onItemSelectedLocation; // Make parameter nullable
+  final Function(Map<String, String>?) onItemSelectedLocation;
   final String? selectedLocationId;
+  final String calendarType; // Thêm property này
 
   const LocationList({
     Key? key,
     required this.onItemSelectedLocation,
     this.selectedLocationId,
+    required this.calendarType, // Thêm parameter này
   }) : super(key: key);
 
   @override
@@ -35,23 +36,43 @@ class _LocationListState extends State<LocationList> {
   }
 
   Future<void> _fetchResourceData() async {
-    List<ListEventResourceModel>? listEvent =
-        await _apiProvider.getListEventResource(User.token.toString());
+    try {
+      List<ListEventResourceModel>? listEvent;
+      if (widget.calendarType == 'organization') {
+        listEvent =
+            await _apiProvider.getListEventResource(User.token.toString());
+      } else {
+        listEvent = await _apiProvider
+            .getListOfPersonalEventResource(User.token.toString());
+      }
 
-    if (listEvent != null) {
-      setState(() {
-        dataListLocation.clear();
-        dataListLocation
-            .addAll(listEvent.where((item) => item.group == 0).map((item) {
-          return {
-            'id': item.id.toString(),
-            'location': item.name ?? '',
-            'description': item.description ?? '',
-          };
-        }).toList());
-        _filteredDataListLocation =
-            List.from(dataListLocation); // Khởi tạo danh sách lọc
-      });
+      print('List Event: $listEvent'); // In ra để kiểm tra dữ liệu
+
+      if (listEvent != null) {
+        final filteredList = listEvent.where((item) {
+          print(
+              'Item group: ${item.group}'); // In ra giá trị group của từng item
+          return item.group != null && item.group == 0;
+        }).toList();
+
+        print('Filtered List: $filteredList'); // In ra danh sách sau khi lọc
+
+        setState(() {
+          dataListLocation.clear();
+          dataListLocation.addAll(
+            filteredList
+                .map((item) => {
+                      'id': item.id ?? '',
+                      'location': item.name ?? '',
+                      'description': item.description ?? '',
+                    })
+                .toList(),
+          );
+          _filteredDataListLocation = List.from(dataListLocation);
+        });
+      }
+    } catch (e) {
+      print('Error in _fetchResourceData: $e');
     }
   }
 
@@ -83,11 +104,11 @@ class _LocationListState extends State<LocationList> {
       appBar: AppBar(
         leading: IconButton(
           icon: Icon(Icons.arrow_back_ios_new_outlined, size: 16),
-          onPressed: () {
-            Navigator.of(context).pop();
-          },
+          onPressed: () => Navigator.of(context).pop(),
         ),
-        title: Text('Chọn địa điểm'),
+        title: Text(widget.calendarType == 'organization'
+            ? 'Chọn địa điểm đơn vị'
+            : 'Chọn địa điểm cá nhân'),
         backgroundColor: Colors.blue,
       ),
       body: GestureDetector(

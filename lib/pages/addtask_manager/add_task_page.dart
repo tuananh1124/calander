@@ -2,25 +2,25 @@ import 'package:flutter/material.dart';
 import 'package:flutter_calendar/pages/addtask_manager/addtask_tab/content_addtask_tab.dart';
 import 'package:flutter_calendar/pages/addtask_manager/addtask_tab/content_persion_tab.dart';
 
-class AddTaskPage extends StatelessWidget {
+class AddTaskPage extends StatefulWidget {
+  final String calendarType;
+
+  const AddTaskPage({
+    Key? key,
+    required this.calendarType,
+  }) : super(key: key);
+  @override
+  _AddTaskPageState createState() => _AddTaskPageState();
+}
+
+class _AddTaskPageState extends State<AddTaskPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        leading: IconButton(
-          icon: Icon(
-            Icons.arrow_back_ios_new_outlined,
-            color: Colors.white,
-            size: 16,
-          ),
-          onPressed: () {
-            Navigator.of(context).pop();
-          },
-        ),
-        title: Text(
-          'Thêm lịch',
-          style: TextStyle(color: Colors.white),
-        ),
+        title: Text(widget.calendarType == 'organization'
+            ? 'Thêm lịch đơn vị'
+            : 'Thêm lịch cá nhân'),
         backgroundColor: Colors.blue,
         foregroundColor: Colors.white,
       ),
@@ -35,7 +35,7 @@ class AddTaskPage extends StatelessWidget {
             children: [
               Container(
                 height: 50,
-                color: Colors.blue, // Đặt màu nền cho TabBar
+                color: Colors.blue, // Set background color for TabBar
                 child: const TabBar(
                   indicatorColor: Colors.white,
                   indicator: BoxDecoration(
@@ -65,7 +65,12 @@ class AddTaskPage extends StatelessWidget {
                 child: TabBarView(
                   children: [
                     SingleChildScrollView(child: TabContentAddTask()),
-                    SingleChildScrollView(child: TabContentPerson()),
+                    SingleChildScrollView(
+                      child: TabContentPerson(
+                        calendarType:
+                            widget.calendarType, // Truyền calendarType
+                      ),
+                    ),
                   ],
                 ),
               ),
