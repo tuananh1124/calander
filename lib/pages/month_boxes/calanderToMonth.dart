@@ -6,12 +6,14 @@ import 'package:intl/intl.dart'; // Import thư viện để định dạng ngà
 
 class CalendarWidget extends StatefulWidget {
   final DateTime selectedDate;
-  final Function(DateTime)? onDaySelected; // Thêm callback
+  final Function(DateTime)? onDaySelected;
+  final String calendarType; // Thêm dòng này
 
   CalendarWidget({
     Key? key,
     required this.selectedDate,
     this.onDaySelected,
+    required this.calendarType, // Thêm dòng này
   }) : super(key: key);
 
   @override
@@ -34,7 +36,9 @@ class _CalendarWidgetState extends State<CalendarWidget> {
   @override
   void didUpdateWidget(CalendarWidget oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (widget.selectedDate != oldWidget.selectedDate) {
+    if (widget.selectedDate != oldWidget.selectedDate ||
+        widget.calendarType != oldWidget.calendarType) {
+      // Thêm điều kiện kiểm tra calendarType
       setState(() {
         _currentDate = widget.selectedDate;
         _fetchEvents();
@@ -45,8 +49,15 @@ class _CalendarWidgetState extends State<CalendarWidget> {
   Future<void> _fetchEvents() async {
     setState(() => _isLoading = true);
     try {
-      List<ListEventcalendarModel>? events =
-          await _apiProvider.getListEveneCalendar(User.token.toString());
+      List<ListEventcalendarModel>? events;
+
+      // Kiểm tra loại lịch và gọi API tương ứng
+      if (widget.calendarType == 'organization') {
+        events = await _apiProvider.getListEveneCalendar(User.token.toString());
+      } else {
+        events = await _apiProvider
+            .getListOfPersonalEveneCalendar(User.token.toString());
+      }
 
       if (events != null) {
         Map<int, int> newEventsCount = {};
@@ -78,6 +89,11 @@ class _CalendarWidgetState extends State<CalendarWidget> {
         setState(() => _isLoading = false);
       }
     }
+  }
+
+  void _printDebugInfo() {
+    print('Calendar Type: ${widget.calendarType}');
+    print('Events Count: $eventsCount');
   }
 
   @override

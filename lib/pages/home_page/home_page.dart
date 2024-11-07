@@ -62,8 +62,15 @@ class _HomePageState extends State<HomePage>
   Future<void> _fetchEventCounts() async {
     final ApiProvider apiProvider = ApiProvider();
     try {
-      List<ListEventcalendarModel>? events =
-          await apiProvider.getListEveneCalendar(User.token.toString());
+      List<ListEventcalendarModel>? events;
+
+      // Lấy events dựa trên loại lịch
+      if (_currentCalendarType == 'organization') {
+        events = await apiProvider.getListEveneCalendar(User.token.toString());
+      } else {
+        events = await apiProvider
+            .getListOfPersonalEveneCalendar(User.token.toString());
+      }
 
       if (events != null) {
         int morning = events.where((event) {
@@ -263,22 +270,20 @@ class _HomePageState extends State<HomePage>
           children: [
             BlocBuilder<MonthBloc, MonthBlocState>(
               builder: (context, state) {
-                return CalendarWidget(
+                return // Trong HomePage
+                    CalendarWidget(
                   selectedDate: state.selectedDate,
                   onDaySelected: (DateTime selectedDate) {
                     setState(() {
-                      // Chuyển sang chế độ xem theo tuần
                       _selectedFilter = 'Theo tuần';
-
-                      // Cập nhật ngày được chọn
                       _currentDate = selectedDate;
-
-                      // Cập nhật UI
                       _updateSelectedMonthAndDayOfWeek(selectedDate);
                       _dateBloc.add(LoadData(selectedDate));
                       _fetchEventCounts();
                     });
                   },
+                  calendarType:
+                      _currentCalendarType, // Truyền loại lịch hiện tại
                 );
               },
             ),
@@ -331,58 +336,88 @@ class _HomePageState extends State<HomePage>
     return Container(
       padding: EdgeInsets.all(8),
       color: Colors.white,
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          IconButton(
-            icon: Icon(Icons.arrow_left),
-            onPressed: () {
-              if (_selectedFilter == 'Theo tuần') {
-                _changeWeek(-1);
-              } else {
-                _changeMonth(-1);
-                context.read<MonthBloc>().add(ChangeMonth(-1));
-              }
-            },
-          ),
-          GestureDetector(
-            onTap: () => _selectDate(context),
-            child: Text(
-              _selectedFilter == 'Theo tuần'
-                  ? DateFormat('dd/MM/yyyy').format(_currentDate)
-                  : 'Tháng ${DateFormat('MM/yyyy', 'vi_VN').format(_currentDate)}',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-          ),
-          IconButton(
-            icon: Icon(Icons.arrow_right),
-            onPressed: () {
-              if (_selectedFilter == 'Theo tuần') {
-                _changeWeek(1);
-              } else {
-                _changeMonth(1);
-                context.read<MonthBloc>().add(ChangeMonth(1));
-              }
-            },
-          ),
-          if (_hasChangedWeek || _hasChangedMonth)
-            TextButton(
-              onPressed: () {
-                if (_selectedFilter == 'Theo tuần') {
-                  _goToCurrentWeek();
-                } else {
-                  _goToCurrentMonth();
-                }
-                context.read<MonthBloc>().add(LoadDataToMonth(_currentDate));
-              },
-              child: Text(
-                _selectedFilter == 'Theo tuần'
-                    ? 'Tuần hiện tại'
-                    : 'Tháng hiện tại',
-                style: TextStyle(color: Colors.black),
+      child: BlocBuilder<MonthBloc, MonthBlocState>(
+        builder: (context, state) {
+          return Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              IconButton(
+                icon: Icon(Icons.arrow_left),
+                onPressed: () {
+                  if (_selectedFilter == 'Theo tuần') {
+                    _changeWeek(-1);
+                  } else {
+                    setState(() {
+                      // Cập nhật _currentDate trước
+                      DateTime newDate = DateTime(
+                        state.selectedDate.year,
+                        state.selectedDate.month - 1,
+                        1,
+                      );
+                      _currentDate = newDate;
+                      _hasChangedMonth =
+                          newDate.month != DateTime.now().month ||
+                              newDate.year != DateTime.now().year;
+                    });
+                    // Sau đó mới gọi event
+                    context.read<MonthBloc>().add(ChangeMonth(-1));
+                  }
+                },
               ),
-            ),
-        ],
+              GestureDetector(
+                onTap: () => _selectDate(context),
+                child: Text(
+                  _selectedFilter == 'Theo tuần'
+                      ? DateFormat('dd/MM/yyyy').format(_currentDate)
+                      : 'Tháng ${DateFormat('MM/yyyy', 'vi_VN').format(state.selectedDate)}',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+              ),
+              IconButton(
+                icon: Icon(Icons.arrow_right),
+                onPressed: () {
+                  if (_selectedFilter == 'Theo tuần') {
+                    _changeWeek(1);
+                  } else {
+                    setState(() {
+                      // Cập nhật _currentDate trước
+                      DateTime newDate = DateTime(
+                        state.selectedDate.year,
+                        state.selectedDate.month + 1,
+                        1,
+                      );
+                      _currentDate = newDate;
+                      _hasChangedMonth =
+                          newDate.month != DateTime.now().month ||
+                              newDate.year != DateTime.now().year;
+                    });
+                    // Sau đó mới gọi event
+                    context.read<MonthBloc>().add(ChangeMonth(1));
+                  }
+                },
+              ),
+              if (_hasChangedWeek || _hasChangedMonth)
+                TextButton(
+                  onPressed: () {
+                    if (_selectedFilter == 'Theo tuần') {
+                      _goToCurrentWeek();
+                    } else {
+                      _goToCurrentMonth();
+                    }
+                    context
+                        .read<MonthBloc>()
+                        .add(LoadDataToMonth(_currentDate));
+                  },
+                  child: Text(
+                    _selectedFilter == 'Theo tuần'
+                        ? 'Tuần hiện tại'
+                        : 'Tháng hiện tại',
+                    style: TextStyle(color: Colors.black),
+                  ),
+                ),
+            ],
+          );
+        },
       ),
     );
   }
@@ -426,6 +461,7 @@ class _HomePageState extends State<HomePage>
 
   void _changeMonth(int increment) {
     setState(() {
+      // Tính toán tháng mới
       int newMonth = _currentDate.month + increment;
       int newYear = _currentDate.year;
       if (newMonth > 12) {
@@ -435,9 +471,13 @@ class _HomePageState extends State<HomePage>
         newMonth = 12;
         newYear--;
       }
+
+      // Cập nhật currentDate và các state liên quan
       _currentDate = DateTime(newYear, newMonth, 1);
       _selectedMonth = DateFormat('MMMM', 'vi_VN').format(_currentDate);
       _updateSelectedMonthAndDayOfWeek(_currentDate);
+
+      // Đồng bộ với MonthBloc
       _monthBloc.add(LoadDataToMonth(_currentDate));
       _hasChangedMonth = true;
       _fetchEventCounts();
@@ -623,7 +663,6 @@ class _HomePageState extends State<HomePage>
           final selectedMonth =
               DateFormat('MMMM', 'vi_VN').format(state.selectedDate);
 
-          // Find index of the selected month
           int selectedMonthIndex = state.monthsList
               .indexWhere((m) => m['monthName'] == selectedMonth);
           if (selectedMonthIndex == -1) {
@@ -643,8 +682,30 @@ class _HomePageState extends State<HomePage>
             onHorizontalDragEnd: (details) {
               if (details.primaryVelocity! < 0) {
                 context.read<MonthBloc>().add(ChangeMonth(1));
+                setState(() {
+                  int newMonth = _currentDate.month + 1;
+                  int newYear = _currentDate.year;
+                  if (newMonth > 12) {
+                    newMonth = 1;
+                    newYear++;
+                  }
+                  _currentDate = DateTime(newYear, newMonth, 1);
+                  // Cập nhật _hasChangedMonth
+                  _hasChangedMonth = true;
+                });
               } else if (details.primaryVelocity! > 0) {
                 context.read<MonthBloc>().add(ChangeMonth(-1));
+                setState(() {
+                  int newMonth = _currentDate.month - 1;
+                  int newYear = _currentDate.year;
+                  if (newMonth < 1) {
+                    newMonth = 12;
+                    newYear--;
+                  }
+                  _currentDate = DateTime(newYear, newMonth, 1);
+                  // Cập nhật _hasChangedMonth
+                  _hasChangedMonth = true;
+                });
               }
             },
             child: Row(
@@ -662,6 +723,13 @@ class _HomePageState extends State<HomePage>
                       final newDate = DateTime(state.selectedDate.year,
                           state.monthsList.indexOf(month) + 1, 1);
                       context.read<MonthBloc>().add(LoadDataToMonth(newDate));
+                      setState(() {
+                        _currentDate = newDate;
+                        // Cập nhật _hasChangedMonth khi tap chọn tháng
+                        _hasChangedMonth =
+                            newDate.month != DateTime.now().month ||
+                                newDate.year != DateTime.now().year;
+                      });
                     },
                     child: Container(
                       width: adjustedItemWidth,
@@ -750,12 +818,14 @@ class _HomePageState extends State<HomePage>
           isMorning: true,
           onEventCountChanged: (count) => setState(() => morningCount = count),
           selectedDate: _currentDate,
+          calendarType: _currentCalendarType, // Thêm dòng này
         ),
         TabcardList(
           isMorning: false,
           onEventCountChanged: (count) =>
               setState(() => afternoonCount = count),
           selectedDate: _currentDate,
+          calendarType: _currentCalendarType, // Thêm dòng này
         ),
       ],
     );

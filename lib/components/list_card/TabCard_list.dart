@@ -9,12 +9,14 @@ class TabcardList extends StatefulWidget {
   final bool isMorning;
   final Function(int) onEventCountChanged;
   final DateTime selectedDate;
+  final String calendarType; // Thêm tham số này
 
   TabcardList({
     Key? key,
     required this.isMorning,
     required this.onEventCountChanged,
     required this.selectedDate,
+    required this.calendarType, // Thêm vào constructor
   }) : super(key: key);
 
   @override
@@ -49,8 +51,15 @@ class _TabcardListState extends State<TabcardList>
 
   Future<void> fetchListEveneCalendar() async {
     try {
-      List<ListEventcalendarModel>? modelList =
-          await _apiProvider.getListEveneCalendar(User.token.toString());
+      List<ListEventcalendarModel>? modelList;
+      if (widget.calendarType == 'organization') {
+        modelList =
+            await _apiProvider.getListEveneCalendar(User.token.toString());
+      } else {
+        modelList = await _apiProvider
+            .getListOfPersonalEveneCalendar(User.token.toString());
+      }
+
       setState(() {
         _events = _filterAndSortEvents(modelList ?? []);
         _isLoading = false;

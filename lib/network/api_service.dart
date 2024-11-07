@@ -262,6 +262,37 @@ class ApiProvider {
     }
   }
 
+  Future<List<ListEventcalendarModel>?> getListOfPersonalEveneCalendar(
+      String token) async {
+    try {
+      final response =
+          await getConnect(getListOfPersonalEveneCalendarAPI, token);
+      var decodedBody = utf8.decode(response.bodyBytes);
+
+      print(response.statusCode);
+
+      if (response.statusCode == statusOk) {
+        var responseData = jsonDecode(decodedBody);
+        //print(responseData); // In ra để kiểm tra cấu trúc dữ liệu
+        if (responseData is Map) {
+          if (responseData.containsKey('result')) {
+            var listData = responseData['result'];
+
+            if (listData is List) {
+              List<ListEventcalendarModel> modelList = listData
+                  .map((item) => ListEventcalendarModel.fromJson(item))
+                  .toList();
+              return modelList;
+            }
+          }
+        }
+      }
+    } catch (e) {
+      print('Error fetching personal list: $e');
+      return null; // Trả về null trong trường hợp có lỗi
+    }
+  }
+
   Future<List<ListEventResourceModel>?> getListEventResource(
       String token) async {
     try {

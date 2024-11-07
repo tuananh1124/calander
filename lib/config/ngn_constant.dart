@@ -12,6 +12,9 @@ const String getUserOrganizationAPI =
 const String getListEveneCalendarAPI =
     '$serverURL/website/event-calendar?organizationId=605b064ad9b8222a8db47eb8'; // theo id VĂN PHÒNG TRUNG ƯƠNG ĐẢNG
 
+const String getListOfPersonalEveneCalendarAPI =
+    '$serverURL/website/event-calendar/list-of-personal?organizationId=605b064ad9b8222a8db47eb8';
+
 const String getListSubSearchOrganizationAPI =
     '$serverURL/website/organization/605b064ad9b8222a8db47eb8/list-sub-organizations'; // theo id VĂN PHÒNG TRUNG ƯƠNG ĐẢNG
 
