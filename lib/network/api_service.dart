@@ -351,60 +351,26 @@ class ApiProvider {
   }
 
   Future<CreateEventCalendarModel?> createEventCalendar(
-      String token, CreateEventCalendarModel eventDetails) async {
-    var postData = {
-      'from': eventDetails.from, // Add this line
-      'to': eventDetails.to, // Add this line
-      'type': eventDetails.type,
-      'content': eventDetails.content,
-      'notes': eventDetails.notes,
-      'color': eventDetails.color,
-      'subcolor': eventDetails.subcolor,
-      // Add this line
-      'hosts': eventDetails.hosts
-          ?.map((host) => {
-                'userId': host.userId,
-                'fullName': host.fullName,
-                'organizationName': host.organizationName,
-              })
-          .toList(),
-      'attendeesRequired': eventDetails.attendeesRequired
-          ?.map((attendee) => {
-                'userId': attendee.userId,
-                'fullName': attendee.fullName,
-                'organizationName': attendee.organizationName,
-              })
-          .toList(),
-      'attendeesNoRequired': eventDetails.attendeesNoRequired
-          ?.map((attendee) => {
-                'userId': attendee.userId,
-                'fullName': attendee.fullName,
-                'organizationName': attendee.organizationName,
-              })
-          .toList(),
-      'creator': {
-        'userId': eventDetails.creator?.userId,
-        'fullName': eventDetails.creator?.fullName,
-        'organizationName': eventDetails.creator?.organizationName,
-      },
-    };
+      String token, CreateEventCalendarModel event) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$serverURL/website/event-calendar'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode(event.toJson()),
+      );
 
-    var response = await postConnect(createEventCalendarAPI, postData, token);
-    print(response.statusCode);
-    var decodedBody = utf8.decode(response.bodyBytes);
-    // print(decodedBody);
-
-    if (response.statusCode == statusOk) {
-      var responseData = jsonDecode(decodedBody);
-      var result = responseData['result'];
-
-      CreateEventCalendarModel model =
-          CreateEventCalendarModel.fromJson(result);
-      print(result);
-      return model;
-    } else {
-      print(
-          'API tạo sự kiện thất bại với mã trạng thái: ${response.statusCode}');
+      if (response.statusCode == 200) {
+        final responseData = jsonDecode(response.body);
+        if (responseData['result'] != null) {
+          return CreateEventCalendarModel.fromJson(responseData['result']);
+        }
+      }
+      return null;
+    } catch (e) {
+      print('Error creating event: $e');
       return null;
     }
   }
@@ -473,15 +439,29 @@ class ApiProvider {
     }
   }
 
-  Future<bool> deleteEventCalendar(String id, String token) async {
+  Future<bool> deleteEventResource(String id, String token) async {
     try {
-      // Tạo URL động bằng cách thay thế {id} với id thực tế
       String url = '$serverURL/website/event-resource/$id';
 
       final response = await deleteConnect(url, token);
 
       if (response.statusCode == statusOk) {
-        // Trả về true nếu xóa thành công
+        return true;
+      }
+      return false;
+    } catch (e) {
+      print('Error: $e');
+      return false;
+    }
+  }
+
+  Future<bool> deleteEventCalendar(String id, String token) async {
+    try {
+      String url = '$serverURL/website/event-calendar/$id';
+
+      final response = await deleteConnect(url, token);
+
+      if (response.statusCode == statusOk) {
         return true;
       }
       return false;

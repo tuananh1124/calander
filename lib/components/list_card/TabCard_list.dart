@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_calendar/models/color_model.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_calendar/components/list_card/TabCard_item.dart';
 import 'package:flutter_calendar/models/list_event_calendar_model.dart';
@@ -28,11 +29,24 @@ class _TabcardListState extends State<TabcardList>
   bool _isLoading = true;
   final ApiProvider _apiProvider = ApiProvider();
   List<ListEventcalendarModel> _events = [];
+  ColorModel? _colors;
 
   @override
   void initState() {
     super.initState();
     fetchListEveneCalendar();
+    fetchColors();
+  }
+
+  Future<void> fetchColors() async {
+    try {
+      final colors = await _apiProvider.getColor(User.token.toString());
+      setState(() {
+        _colors = colors;
+      });
+    } catch (e) {
+      print('Error fetching colors: $e');
+    }
   }
 
   @override
@@ -115,6 +129,11 @@ class _TabcardListState extends State<TabcardList>
             if (index == 0 || _shouldShowTimeDivider(events[index - 1], event))
               _buildTimeDivider(event),
             TabcardItem(
+              id: event.id ?? '', // Thêm id
+              onDeleteSuccess: () {
+                // Refresh dữ liệu khi xóa thành công
+                fetchListEveneCalendar();
+              },
               date: _formatDate(event.from ?? 0),
               time: _formatTime(event.from ?? 0),
               content: event.content ?? '',
@@ -125,6 +144,7 @@ class _TabcardListState extends State<TabcardList>
               resources: event.resources?.join(', ') ?? '',
               attachments: event.attachments?.join(', ') ?? '',
               creator: event.creator?.fullName ?? '',
+              color: event.color, // Thêm color vào đây
             ),
           ],
         );

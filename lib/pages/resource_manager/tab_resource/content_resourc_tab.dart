@@ -83,7 +83,7 @@ class _TabContentResourceState extends State<TabContentResource>
   Future<void> _deleteLocation(String id) async {
     try {
       bool success =
-          await _apiProvider.deleteEventCalendar(id, User.token.toString());
+          await _apiProvider.deleteEventResource(id, User.token.toString());
       if (success) {
         // Nếu xóa thành công, cập nhật lại danh sách
         await refreshList();

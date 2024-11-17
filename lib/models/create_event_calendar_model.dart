@@ -1,112 +1,117 @@
-import 'dart:convert';
-
 class CreateEventCalendarModel {
-  final String? id;
-  final String? createdTime;
-  final String? updatedTime;
+  final int? from;
+  final int? to;
   final String? type;
   final String? content;
   final String? notes;
   final String? color;
-  final String? subcolor;
-  // Add this line
-  final int? from; // Add this line
-  final int? to; // Add this line
-  final List<Host>? hosts;
-  final List<Attendee>? attendeesRequired;
-  final List<Attendee>? attendeesNoRequired;
-  final Creator? creator;
+  final String? organizationId;
+  final List<String>? resources;
+  final List<String>? attachments;
+  final List<AttendeeModel>? hosts;
+  final List<AttendeeModel>? attendeesRequired;
+  final List<AttendeeModel>? attendeesNoRequired;
 
   CreateEventCalendarModel({
-    this.id,
-    this.createdTime,
-    this.updatedTime,
+    this.from,
+    this.to,
     this.type,
     this.content,
     this.notes,
     this.color,
-    this.subcolor,
-    // Add this line
-    this.from, // Add this line
-    this.to, // Add this line
+    this.organizationId,
+    this.resources,
+    this.attachments,
     this.hosts,
     this.attendeesRequired,
     this.attendeesNoRequired,
-    this.creator,
   });
 
   factory CreateEventCalendarModel.fromJson(Map<String, dynamic> json) {
     return CreateEventCalendarModel(
-      id: json['id'],
-      createdTime: json['createdTime'].toString(),
-      updatedTime: json['updatedTime'].toString(),
+      from: json['from'],
+      to: json['to'],
       type: json['type'],
       content: json['content'],
       notes: json['notes'],
       color: json['color'],
-      subcolor: json['subcolor'],
-      // Add this line
-      from: json['from'], // Add this line
-      to: json['to'], // Add this line
-      hosts: (json['hosts'] as List<dynamic>?)
-          ?.map((host) => Host.fromJson(host))
-          .toList(),
-      attendeesRequired: (json['attendeesRequired'] as List<dynamic>?)
-          ?.map((attendee) => Attendee.fromJson(attendee))
-          .toList(),
-      attendeesNoRequired: (json['attendeesNoRequired'] as List<dynamic>?)
-          ?.map((attendee) => Attendee.fromJson(attendee))
-          .toList(),
-      creator:
-          json['creator'] != null ? Creator.fromJson(json['creator']) : null,
+      organizationId: json['organizationId'],
+      resources: json['resources'] != null
+          ? List<String>.from(json['resources'])
+          : null,
+      attachments: json['attachments'] != null
+          ? List<String>.from(json['attachments'])
+          : null,
+      hosts: json['hosts'] != null
+          ? (json['hosts'] as List)
+              .map((h) => AttendeeModel.fromJson(h))
+              .toList()
+          : null,
+      attendeesRequired: json['attendeesRequired'] != null
+          ? (json['attendeesRequired'] as List)
+              .map((a) => AttendeeModel.fromJson(a))
+              .toList()
+          : null,
+      attendeesNoRequired: json['attendeesNoRequired'] != null
+          ? (json['attendeesNoRequired'] as List)
+              .map((a) => AttendeeModel.fromJson(a))
+              .toList()
+          : null,
     );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'from': from,
+      'to': to,
+      'type': type,
+      'content': content,
+      'notes': notes,
+      'color': color,
+      'organizationId': organizationId,
+      'resources': resources ?? [],
+      'attachments': attachments ?? [],
+      'hosts': hosts?.map((h) => h.toJson()).toList() ?? [],
+      'attendeesRequired':
+          attendeesRequired?.map((a) => a.toJson()).toList() ?? [],
+      'attendeesNoRequired':
+          attendeesNoRequired?.map((a) => a.toJson()).toList() ?? [],
+    };
   }
 }
 
-class Host {
+class AttendeeModel {
   final String? userId;
   final String? fullName;
+  final String? jobTitle;
+  final String? organizationId;
   final String? organizationName;
 
-  Host({this.userId, this.fullName, this.organizationName});
+  AttendeeModel({
+    this.userId,
+    this.fullName,
+    this.jobTitle,
+    this.organizationId,
+    this.organizationName,
+  });
 
-  factory Host.fromJson(Map<String, dynamic> json) {
-    return Host(
+  factory AttendeeModel.fromJson(Map<String, dynamic> json) {
+    return AttendeeModel(
       userId: json['userId'],
       fullName: json['fullName'],
+      jobTitle: json['jobTitle'],
+      organizationId: json['organizationId'],
       organizationName: json['organizationName'],
     );
   }
-}
 
-class Attendee {
-  final String? userId;
-  final String? fullName;
-  final String? organizationName;
-
-  Attendee({this.userId, this.fullName, this.organizationName});
-
-  factory Attendee.fromJson(Map<String, dynamic> json) {
-    return Attendee(
-      userId: json['userId'],
-      fullName: json['fullName'],
-      organizationName: json['organizationName'],
-    );
-  }
-}
-
-class Creator {
-  final String? userId;
-  final String? fullName;
-  final String? organizationName;
-
-  Creator({this.userId, this.fullName, this.organizationName});
-
-  factory Creator.fromJson(Map<String, dynamic> json) {
-    return Creator(
-      userId: json['userId'],
-      fullName: json['fullName'],
-      organizationName: json['organizationName'],
-    );
+  Map<String, dynamic> toJson() {
+    return {
+      'userId': userId,
+      'fullName': fullName,
+      'jobTitle': jobTitle,
+      'organizationId': organizationId,
+      'organizationName': organizationName,
+    };
   }
 }

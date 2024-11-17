@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_calendar/models/login_model.dart';
+import 'package:flutter_calendar/network/api_service.dart';
 
-class TabcardItem extends StatelessWidget {
+class TabcardItem extends StatefulWidget {
   final String date;
   final String time;
   final String content;
@@ -11,7 +13,9 @@ class TabcardItem extends StatelessWidget {
   final String resources;
   final String attachments;
   final String creator;
-
+  final String? color;
+  final VoidCallback? onDeleteSuccess;
+  final String id;
   const TabcardItem({
     Key? key,
     required this.date,
@@ -24,7 +28,28 @@ class TabcardItem extends StatelessWidget {
     required this.resources,
     required this.attachments,
     required this.creator,
+    required this.id,
+    this.color,
+    this.onDeleteSuccess,
   }) : super(key: key);
+
+  @override
+  _TabcardItemState createState() => _TabcardItemState();
+}
+
+class _TabcardItemState extends State<TabcardItem> {
+  final ApiProvider _apiProvider = ApiProvider();
+
+  @override
+  void initState() {
+    super.initState();
+  }
+
+  Color get _getColor {
+    return widget.color != null
+        ? Color(int.parse(widget.color!.replaceAll('#', '0xFF')))
+        : Colors.grey;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -33,7 +58,7 @@ class TabcardItem extends StatelessWidget {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(10),
         border: Border.all(
-          color: Colors.blue,
+          color: _getColor,
         ),
       ),
       child: Card(
@@ -60,11 +85,9 @@ class TabcardItem extends StatelessWidget {
   }
 
   Widget _buildErrorIndicator() {
-    Color indicatorColor = Colors.green;
-
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: indicatorColor,
+        color: _getColor,
         borderRadius: BorderRadius.circular(10.0),
       ),
       child: Padding(
@@ -79,7 +102,7 @@ class TabcardItem extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         SizedBox(height: 4),
-        Text(content, style: TextStyle(fontWeight: FontWeight.bold)),
+        Text(widget.content, style: TextStyle(fontWeight: FontWeight.bold)),
         SizedBox(height: 4),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -108,7 +131,7 @@ class TabcardItem extends StatelessWidget {
       children: [
         Icon(Icons.timer_outlined, color: Colors.grey, size: iconSize),
         SizedBox(width: 4),
-        Text(time, style: TextStyle(fontSize: textSize)),
+        Text(widget.time, style: TextStyle(fontSize: textSize)),
       ],
     );
   }
@@ -122,7 +145,7 @@ class TabcardItem extends StatelessWidget {
       children: [
         Icon(Icons.date_range, color: Colors.grey, size: iconSize),
         SizedBox(width: 4),
-        Text(date, style: TextStyle(fontSize: textSize)),
+        Text(widget.date, style: TextStyle(fontSize: textSize)),
       ],
     );
   }
@@ -179,10 +202,14 @@ class TabcardItem extends StatelessWidget {
   }
 
   int _calculateTotalAttendees() {
-    int requiredAttendees =
-        attendeesRequired.split(',').where((e) => e.trim().isNotEmpty).length;
-    int nonRequiredAttendees =
-        attendeesNoRequired.split(',').where((e) => e.trim().isNotEmpty).length;
+    int requiredAttendees = widget.attendeesRequired
+        .split(',')
+        .where((e) => e.trim().isNotEmpty)
+        .length;
+    int nonRequiredAttendees = widget.attendeesNoRequired
+        .split(',')
+        .where((e) => e.trim().isNotEmpty)
+        .length;
     return requiredAttendees + nonRequiredAttendees;
   }
 
@@ -196,7 +223,7 @@ class TabcardItem extends StatelessWidget {
         Icon(Icons.file_copy_rounded, color: Colors.grey, size: iconSize),
         SizedBox(width: 4),
         Text(
-            attachments.isNotEmpty
+            widget.attachments.isNotEmpty
                 ? 'Có tệp đính kèm'
                 : 'Không có tệp đính kèm',
             style: TextStyle(fontSize: textSize)),
@@ -239,17 +266,18 @@ class TabcardItem extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildDetailRow('Ngày:', date),
-                _buildDetailRow('Thời gian:', time),
-                _buildDetailRow('Nội dung:', content),
-                _buildDetailRow('Ghi chú:', notes),
-                _buildDetailRow('Chủ trì:', hosts),
-                _buildDetailRow('Người tham dự bắt buộc:', attendeesRequired),
+                _buildDetailRow('Ngày:', widget.date),
+                _buildDetailRow('Thời gian:', widget.time),
+                _buildDetailRow('Nội dung:', widget.content),
+                _buildDetailRow('Ghi chú:', widget.notes),
+                _buildDetailRow('Chủ trì:', widget.hosts),
                 _buildDetailRow(
-                    'Người tham dự không bắt buộc:', attendeesNoRequired),
-                _buildDetailRow('Tài nguyên:', resources),
-                _buildDetailRow('Tệp đính kèm:', attachments),
-                _buildDetailRow('Người tạo:', creator),
+                    'Người tham dự bắt buộc:', widget.attendeesRequired),
+                _buildDetailRow('Người tham dự không bắt buộc:',
+                    widget.attendeesNoRequired),
+                _buildDetailRow('Tài nguyên:', widget.resources),
+                _buildDetailRow('Tệp đính kèm:', widget.attachments),
+                _buildDetailRow('Người tạo:', widget.creator),
               ],
             ),
           ),
@@ -286,16 +314,38 @@ class TabcardItem extends StatelessWidget {
       builder: (BuildContext context) {
         return AlertDialog(
           title: const Text('Thông báo'),
-          content: const Text('Bạn có chắc chắn muốn xóa không?'),
+          content: const Text('Bạn có muốn xóa không?'),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Hủy bỏ'),
+              child: const Text('Hủy'),
             ),
             TextButton(
-              onPressed: () {
-                // Implement delete functionality
-                Navigator.of(context).pop();
+              onPressed: () async {
+                // Gọi API xóa
+                bool success = await _apiProvider.deleteEventCalendar(
+                  widget.id, // Thêm id vào TabcardItem
+                  User.token.toString(),
+                );
+
+                Navigator.of(context).pop(); // Đóng dialog
+
+                if (success) {
+                  // Hiển thị thông báo thành công
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Xóa thành công')),
+                  );
+
+                  // Gọi callback để refresh
+                  if (widget.onDeleteSuccess != null) {
+                    widget.onDeleteSuccess!();
+                  }
+                } else {
+                  // Hiển thị thông báo lỗi
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Xóa thất bại')),
+                  );
+                }
               },
               child: const Text('Xóa'),
             ),
