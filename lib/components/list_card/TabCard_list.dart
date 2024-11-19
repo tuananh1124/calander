@@ -52,7 +52,9 @@ class _TabcardListState extends State<TabcardList>
   @override
   void didUpdateWidget(TabcardList oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.selectedDate != widget.selectedDate) {
+    if (oldWidget.selectedDate != widget.selectedDate ||
+        oldWidget.calendarType != widget.calendarType) {
+      // Thêm điều kiện này
       fetchListEveneCalendar();
     }
   }
@@ -121,6 +123,7 @@ class _TabcardListState extends State<TabcardList>
     }
 
     return ListView.builder(
+      key: ValueKey('${widget.calendarType}_${widget.selectedDate}'),
       itemCount: events.length,
       itemBuilder: (context, index) {
         final event = events[index];
@@ -129,13 +132,15 @@ class _TabcardListState extends State<TabcardList>
             if (index == 0 || _shouldShowTimeDivider(events[index - 1], event))
               _buildTimeDivider(event),
             TabcardItem(
-              id: event.id ?? '', // Thêm id
+              id: event.id ?? '',
               onDeleteSuccess: () {
-                // Refresh dữ liệu khi xóa thành công
                 fetchListEveneCalendar();
               },
               date: _formatDate(event.from ?? 0),
               time: _formatTime(event.from ?? 0),
+              to: (event.to != null && event.to != 0)
+                  ? _formatTime(event.to!)
+                  : null,
               content: event.content ?? '',
               notes: event.notes ?? '',
               hosts: _formatHosts(event.hosts),
@@ -144,7 +149,7 @@ class _TabcardListState extends State<TabcardList>
               resources: event.resources?.join(', ') ?? '',
               attachments: event.attachments?.join(', ') ?? '',
               creator: event.creator?.fullName ?? '',
-              color: event.color, // Thêm color vào đây
+              color: event.color,
             ),
           ],
         );

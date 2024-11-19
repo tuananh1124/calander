@@ -5,12 +5,14 @@ import 'package:flutter_calendar/components/location/location_list.dart';
 
 class LocationItem extends StatefulWidget {
   final String location;
-  final String calendarType; // Thêm property này
+  final String calendarType;
+  final Function(Map<String, String>)? onLocationSelected;
 
   const LocationItem({
     super.key,
     required this.location,
-    required this.calendarType, // Thêm parameter này
+    required this.calendarType,
+    this.onLocationSelected,
   });
 
   @override
@@ -57,18 +59,23 @@ class _LocationItemState extends State<LocationItem>
   }
 
   void _onItemSelectedLocation(Map<String, String>? locationData) {
-    // Make parameter nullable
     setState(() {
       if (locationData == null) {
-        // Clear selection
         _selectedLocation = {};
         _itemsLocation = [];
       } else {
-        // Set new location
         _selectedLocation = locationData;
         _itemsLocation = [locationData];
       }
     });
+
+    // Debug print để kiểm tra dữ liệu địa điểm
+    print('Selected Location Data: $_selectedLocation');
+
+    // Notify parent through callback
+    if (widget.onLocationSelected != null && locationData != null) {
+      widget.onLocationSelected!(locationData);
+    }
   }
 
   @override

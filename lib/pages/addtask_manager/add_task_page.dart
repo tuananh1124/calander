@@ -14,6 +14,12 @@ class AddTaskPage extends StatefulWidget {
 }
 
 class _AddTaskPageState extends State<AddTaskPage> {
+  List<Map<String, String>> _selectedHosts = [];
+  List<Map<String, String>> _selectedAttendees = [];
+  List<Map<String, String>> _selectedRequiredAttendees = [];
+  Map<String, String> _selectedLocation = {};
+  List<Map<String, String>> _selectedResources = [];
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -64,11 +70,45 @@ class _AddTaskPageState extends State<AddTaskPage> {
               Expanded(
                 child: TabBarView(
                   children: [
-                    SingleChildScrollView(child: TabContentAddTask()),
+                    SingleChildScrollView(
+                      child: TabContentAddTask(
+                        selectedHosts: _selectedHosts,
+                        selectedAttendees: _selectedAttendees,
+                        selectedRequiredAttendees: _selectedRequiredAttendees,
+                        selectedLocation: _selectedLocation,
+                        selectedResources: _selectedResources,
+                        isOrganization: widget.calendarType ==
+                            'organization', // Thêm dòng này
+                      ),
+                    ),
                     SingleChildScrollView(
                       child: TabContentPerson(
-                        calendarType:
-                            widget.calendarType, // Truyền calendarType
+                        calendarType: widget.calendarType,
+                        onHostsSelected: (hosts) {
+                          setState(() {
+                            _selectedHosts = hosts;
+                          });
+                        },
+                        onAttendeesSelected: (attendees) {
+                          setState(() {
+                            _selectedAttendees = attendees;
+                          });
+                        },
+                        onRequiredAttendeesSelected: (required) {
+                          setState(() {
+                            _selectedRequiredAttendees = required;
+                          });
+                        },
+                        onLocationSelected: (location) {
+                          setState(() {
+                            _selectedLocation = location;
+                          });
+                        },
+                        onResourcesSelected: (resources) {
+                          setState(() {
+                            _selectedResources = resources;
+                          });
+                        },
                       ),
                     ),
                   ],

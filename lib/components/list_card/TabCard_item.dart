@@ -4,6 +4,7 @@ import 'package:flutter_calendar/network/api_service.dart';
 
 class TabcardItem extends StatefulWidget {
   final String date;
+  final String? to;
   final String time;
   final String content;
   final String notes;
@@ -19,6 +20,7 @@ class TabcardItem extends StatefulWidget {
   const TabcardItem({
     Key? key,
     required this.date,
+    this.to,
     required this.time,
     required this.content,
     required this.notes,
@@ -131,7 +133,11 @@ class _TabcardItemState extends State<TabcardItem> {
       children: [
         Icon(Icons.timer_outlined, color: Colors.grey, size: iconSize),
         SizedBox(width: 4),
-        Text(widget.time, style: TextStyle(fontSize: textSize)),
+        Text(
+            (widget.to != null && widget.to != "0" && widget.to!.isNotEmpty)
+                ? "${widget.time} - ${widget.to}"
+                : widget.time,
+            style: TextStyle(fontSize: textSize)),
       ],
     );
   }
@@ -267,7 +273,13 @@ class _TabcardItemState extends State<TabcardItem> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _buildDetailRow('Ngày:', widget.date),
-                _buildDetailRow('Thời gian:', widget.time),
+                _buildDetailRow(
+                    'Thời gian:',
+                    (widget.to != null &&
+                            widget.to != "0" &&
+                            widget.to!.isNotEmpty)
+                        ? "${widget.time} - ${widget.to}"
+                        : widget.time),
                 _buildDetailRow('Nội dung:', widget.content),
                 _buildDetailRow('Ghi chú:', widget.notes),
                 _buildDetailRow('Chủ trì:', widget.hosts),

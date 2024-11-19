@@ -353,6 +353,8 @@ class ApiProvider {
   Future<CreateEventCalendarModel?> createEventCalendar(
       String token, CreateEventCalendarModel event) async {
     try {
+      print('Request Body: ${jsonEncode(event.toJson())}');
+
       final response = await http.post(
         Uri.parse('$serverURL/website/event-calendar'),
         headers: {
@@ -366,11 +368,60 @@ class ApiProvider {
         final responseData = jsonDecode(response.body);
         if (responseData['result'] != null) {
           return CreateEventCalendarModel.fromJson(responseData['result']);
+        } else {
+          print('Response has no result field');
         }
+      } else {
+        print('Request failed with status: ${response.statusCode}');
+        print('Error response: ${response.body}');
       }
       return null;
-    } catch (e) {
+    } catch (e, stackTrace) {
       print('Error creating event: $e');
+      print('Stack trace: $stackTrace');
+      return null;
+    }
+  }
+
+  Future<CreateEventCalendarModel?> createEventCalendarForPersonal(
+      String token, CreateEventCalendarModel event) async {
+    try {
+      // print('Request URL: $serverURL/website/event-calendar');
+      // print('Request Headers: ${{
+      //   'Content-Type': 'application/json',
+      //   'Authorization': 'Bearer $token'
+      // }}');
+      print('Request Body: ${jsonEncode(event.toJson())}');
+
+      final response = await http.post(
+        Uri.parse('$serverURL/website/event-calendar'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode(event.toJson()),
+      );
+
+      // print('Response Status Code: ${response.statusCode}');
+      // print('Response Body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final responseData = jsonDecode(response.body);
+        // print('Decoded Response: $responseData');
+
+        if (responseData['result'] != null) {
+          return CreateEventCalendarModel.fromJson(responseData['result']);
+        } else {
+          print('Response has no result field');
+        }
+      } else {
+        print('Request failed with status: ${response.statusCode}');
+        print('Error response: ${response.body}');
+      }
+      return null;
+    } catch (e, stackTrace) {
+      print('Error creating event: $e');
+      print('Stack trace: $stackTrace');
       return null;
     }
   }

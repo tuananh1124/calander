@@ -31,7 +31,7 @@ const String createEventResourceAPI = '$serverURL/website/event-resource';
 const String createEventResource_PersonalAPI =
     '$serverURL/website/event-resource';
 
-const String createEventCalendarAPI = '$serverURL/website/event-calendar';
+// const String createEventCalendarAPI = '$serverURL/website/event-calendar';
 
 const int statusOk = 200;
 const int statusCreated = 201;

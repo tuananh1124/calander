@@ -59,6 +59,25 @@ class _HomePageState extends State<HomePage>
     super.dispose();
   }
 
+  void _handleCalendarTypeChange(String type) {
+    setState(() {
+      _currentCalendarType = type;
+      // Reset các state liên quan
+      morningCount = 0;
+      afternoonCount = 0;
+    });
+
+    // Cập nhật dữ liệu
+    _fetchEventCounts();
+
+    // Cập nhật dữ liệu cho các bloc
+    if (_selectedFilter == 'Theo tuần') {
+      _dateBloc.add(LoadData(_currentDate));
+    } else {
+      _monthBloc.add(LoadDataToMonth(_currentDate));
+    }
+  }
+
   Future<void> _fetchEventCounts() async {
     final ApiProvider apiProvider = ApiProvider();
     try {
@@ -122,11 +141,7 @@ class _HomePageState extends State<HomePage>
         backgroundColor: Colors.white,
         appBar: _buildAppBar(),
         drawer: CustomDrawer(
-          onCalendarTypeChanged: (String type) {
-            setState(() {
-              _currentCalendarType = type;
-            });
-          },
+          onCalendarTypeChanged: _handleCalendarTypeChange, // Sử dụng hàm mới
         ),
         body: _buildBody(),
       ),

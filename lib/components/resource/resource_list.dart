@@ -46,15 +46,9 @@ class _ResourceListState extends State<ResourceList> {
             .getListOfPersonalEventResource(User.token.toString());
       }
 
-      print('List Event: $listEvent'); // Debug print
-
       if (listEvent != null) {
-        final filteredList = listEvent.where((item) {
-          print('Item group: ${item.group}'); // Debug print
-          return item.group != null && item.group == 1;
-        }).toList();
-
-        print('Filtered List: $filteredList'); // Debug print
+        final filteredList =
+            listEvent.where((item) => item.group == 1).toList();
 
         setState(() {
           dataListResource.clear();
@@ -69,10 +63,32 @@ class _ResourceListState extends State<ResourceList> {
           );
           _filteredDataListResource = List.from(dataListResource);
         });
+
+        // Debug prints
+        print('Data List Resource:');
+        print(dataListResource);
       }
     } catch (e) {
       print('Error in _fetchResourceData: $e');
     }
+  }
+
+  void _handleBack() {
+    List<Map<String, String>> selectedItems = dataListResource
+        .where((item) => _selectedResourceIds.contains(item['id']))
+        .map((item) => {
+              'id': item['id'] ?? '',
+              'resource': item['resource'] ?? '',
+              'description': item['description'] ?? '',
+            })
+        .toList();
+
+    // Debug prints
+    print('Selected Items:');
+    print(selectedItems);
+
+    widget.onItemSelectedResource(selectedItems);
+    Navigator.of(context).pop();
   }
 
   @override
@@ -101,13 +117,7 @@ class _ResourceListState extends State<ResourceList> {
       appBar: AppBar(
         leading: IconButton(
           icon: Icon(Icons.arrow_back_ios_new_outlined, size: 16),
-          onPressed: () {
-            List<Map<String, String>> selectedItems = _filteredDataListResource
-                .where((item) => _selectedResourceIds.contains(item['id']))
-                .toList();
-            widget.onItemSelectedResource(selectedItems);
-            Navigator.of(context).pop();
-          },
+          onPressed: _handleBack,
         ),
         title: Text(widget.calendarType == 'organization'
             ? 'Chọn tài nguyên đơn vị'

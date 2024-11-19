@@ -5,12 +5,14 @@ import 'package:flutter_calendar/components/resource/resource_list.dart';
 
 class ResourceItem extends StatefulWidget {
   final String resource;
-  final String calendarType; // Thêm property này
+  final String calendarType;
+  final Function(List<Map<String, String>>)? onResourcesSelected;
 
   const ResourceItem({
     super.key,
     required this.resource,
-    required this.calendarType, // Thêm parameter này
+    required this.calendarType,
+    this.onResourcesSelected,
   });
 
   @override
@@ -58,6 +60,20 @@ class _ResourceItemState extends State<ResourceItem>
     setState(() {
       _selectedResources = resources;
     });
+
+    // Chuyển đổi format dữ liệu trước khi gửi lên
+    List<Map<String, String>> formattedResources = resources
+        .map((resource) => {
+              'id': resource['id'] ?? '',
+              'resource': resource['resource'] ?? '',
+              'description': resource['description'] ?? ''
+            })
+        .toList();
+
+    // Notify parent through callback
+    if (widget.onResourcesSelected != null) {
+      widget.onResourcesSelected!(formattedResources);
+    }
   }
 
   @override

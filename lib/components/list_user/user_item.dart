@@ -5,8 +5,13 @@ import 'package:flutter_calendar/components/list_user/user_list.dart';
 
 class UserItem extends StatefulWidget {
   final String title;
+  final Function(List<Map<String, String>>)? onSelectedUsers;
 
-  const UserItem({super.key, required this.title});
+  const UserItem({
+    Key? key,
+    required this.title,
+    this.onSelectedUsers,
+  }) : super(key: key);
 
   @override
   State<UserItem> createState() => _UserItemState();
@@ -52,25 +57,37 @@ class _UserItemState extends State<UserItem>
   }
 
   void _showMyList() {
-    Navigator.of(context)
-        .push(
+    Navigator.of(context).push(
       SlideFromRightPageRoute(
         page: UserList(
           onEmployeesSelected: (employees) {
             setState(() {
-              _selectedEmployees = employees;
-              _items = employees;
+              _selectedEmployees = employees
+                  .map((e) => {
+                        'userId': e['id'] ?? '', // Sử dụng id làm userId
+                        'fullName': e['fullName'] ?? '',
+                        'jobTitle': e['jobTitle'] ?? '',
+                        'organizationId':
+                            e['organizationId'] ?? '605b064ad9b8222a8db47eb8',
+                        'organizationName': e['organizationName'] ??
+                            'VĂN PHÒNG TRUNG ƯƠNG ĐẢNG',
+                      })
+                  .toList();
+              _items = _selectedEmployees;
+
+              // Debug log
+              print('Selected employees: $_selectedEmployees');
+
+              if (widget.onSelectedUsers != null) {
+                widget.onSelectedUsers!(_selectedEmployees);
+              }
             });
           },
           initialSelectedEmployees: _selectedEmployeesState,
-          previouslySelectedEmployees:
-              _items, // Truyền danh sách đã chọn trước đó
+          previouslySelectedEmployees: _items,
         ),
       ),
-    )
-        .then((value) {
-      setState(() {});
-    });
+    );
   }
 
   void _updateSelectedState(Map<String, Map<String, bool>> newState) {

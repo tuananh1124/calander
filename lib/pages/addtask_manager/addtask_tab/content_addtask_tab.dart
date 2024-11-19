@@ -1,128 +1,31 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_calendar/models/color_model.dart';
+import 'package:flutter_calendar/models/create_event_calendar_model.dart';
 import 'package:flutter_calendar/models/login_model.dart';
 import 'package:flutter_calendar/network/api_service.dart';
+import 'package:flutter_calendar/pages/addtask_manager/addtask_tab/time_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:file_picker/file_picker.dart'; // Import file_picker package
 import 'package:flutter/material.dart';
 
-class CustomTimePicker extends StatefulWidget {
-  final Function(TimeOfDay) onTimeSelected;
-  final TimeOfDay initialTime;
-
-  CustomTimePicker({required this.onTimeSelected, required this.initialTime});
-
-  @override
-  _CustomTimePickerState createState() => _CustomTimePickerState();
-}
-
-class _CustomTimePickerState extends State<CustomTimePicker> {
-  late int _hour;
-  late int _minute;
-  late String _period;
-
-  final List<int> _validMinutes = List.generate(12, (index) => index * 5);
-
-  @override
-  void initState() {
-    super.initState();
-    _hour = widget.initialTime.hour;
-    _minute = _validMinutes.contains(widget.initialTime.minute)
-        ? widget.initialTime.minute
-        : _validMinutes.reduce((curr, next) =>
-            (next - widget.initialTime.minute).abs() <
-                    (curr - widget.initialTime.minute).abs()
-                ? next
-                : curr);
-    _updatePeriod();
-  }
-
-  void _updatePeriod() {
-    _period = _hour < 12 ? 'AM' : 'PM';
-    _hour = _hour % 12;
-    if (_hour == 0) _hour = 12;
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return AlertDialog(
-      title: Text('Chọn giờ'),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              DropdownButton<int>(
-                value: _hour,
-                items: List.generate(12, (index) => index + 1)
-                    .map((hour) => DropdownMenuItem(
-                          value: hour,
-                          child: Text(hour.toString()),
-                        ))
-                    .toList(),
-                onChanged: (value) {
-                  setState(() {
-                    _hour = value!;
-                    if (_hour == 12) {
-                      _period = _period == 'AM' ? 'PM' : 'AM';
-                    }
-                  });
-                },
-              ),
-              Text(':'),
-              DropdownButton<int>(
-                value: _minute,
-                items: _validMinutes
-                    .map((minute) => DropdownMenuItem(
-                          value: minute,
-                          child: Text(minute.toString().padLeft(2, '0')),
-                        ))
-                    .toList(),
-                onChanged: (value) {
-                  setState(() {
-                    _minute = value!;
-                  });
-                },
-              ),
-              DropdownButton<String>(
-                value: _period,
-                items: ['AM', 'PM']
-                    .map((period) => DropdownMenuItem(
-                          value: period,
-                          child: Text(period),
-                        ))
-                    .toList(),
-                onChanged: (value) {
-                  setState(() {
-                    _period = value!;
-                    if (_hour == 12) {
-                      _hour = _hour % 12;
-                    }
-                  });
-                },
-              ),
-            ],
-          ),
-        ],
-      ),
-      actions: [
-        TextButton(
-          onPressed: () {
-            int finalHour = _hour % 12 + (_period == 'PM' ? 12 : 0);
-            if (finalHour == 24) finalHour = 0;
-            widget.onTimeSelected(TimeOfDay(hour: finalHour, minute: _minute));
-            Navigator.of(context).pop();
-          },
-          child: Text('Chọn'),
-        ),
-      ],
-    );
-  }
-}
-
-// TabContentAddTask
 class TabContentAddTask extends StatefulWidget {
+  final List<Map<String, String>> selectedHosts;
+  final List<Map<String, String>> selectedAttendees;
+  final List<Map<String, String>> selectedRequiredAttendees;
+  final Map<String, String> selectedLocation;
+  final List<Map<String, String>> selectedResources;
+  final bool isOrganization;
+
+  const TabContentAddTask({
+    Key? key,
+    required this.selectedHosts,
+    required this.selectedAttendees,
+    required this.selectedRequiredAttendees,
+    required this.selectedLocation,
+    required this.selectedResources,
+    required this.isOrganization,
+  }) : super(key: key);
+
   @override
   _TabContentAddTaskState createState() => _TabContentAddTaskState();
 }
@@ -136,15 +39,157 @@ class _TabContentAddTaskState extends State<TabContentAddTask>
   TextEditingController _noteController = TextEditingController();
   String _selectedPeriod = 'Chiều';
   String? _selectedColor;
-  String? _selectedFile; // Variable to store selected file name
+  String? _selectedFile;
   final ApiProvider _apiProvider = ApiProvider();
-  ColorModel?
-      colorModelList; // Nullable to avoid errors when data is not loaded
+  ColorModel? colorModelList;
+
+  // Nullable to avoid errors when data is not loaded
 
   @override
   void initState() {
     super.initState();
     colorsAPI();
+  }
+
+  void _handleSave() async {
+    List<String> resourceIds = widget.selectedResources
+        .map((r) => r['id']?.toString() ?? '')
+        .where((id) => id.isNotEmpty)
+        .toList();
+    List<String> allResources = [];
+
+    // Thêm địa điểm (group 0) nếu có
+    if (widget.selectedLocation.isNotEmpty &&
+        widget.selectedLocation['id'] != null) {
+      allResources.add(widget.selectedLocation['id']!);
+    }
+
+    // Thêm tài nguyên (group 1)
+    allResources.addAll(widget.selectedResources
+        .where((r) => r['id'] != null)
+        .map((r) => r['id']!)
+        .toList());
+    if (_contentController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Vui lòng nhập nội dung')),
+      );
+      return;
+    }
+
+    int? fromTimestamp;
+    int? toTimestamp;
+
+    if (_dateController.text.isNotEmpty) {
+      DateTime selectedDate =
+          DateFormat('dd/MM/yyyy').parse(_dateController.text);
+
+      if (_timeStartController.text.isNotEmpty) {
+        TimeOfDay startTime = TimeOfDay.fromDateTime(
+            DateFormat('hh:mm a').parse(_timeStartController.text));
+        DateTime startDateTime = DateTime(
+          selectedDate.year,
+          selectedDate.month,
+          selectedDate.day,
+          startTime.hour,
+          startTime.minute,
+        );
+        fromTimestamp = startDateTime.millisecondsSinceEpoch;
+      } else {
+        fromTimestamp = selectedDate.millisecondsSinceEpoch;
+      }
+
+      if (_timeEndController.text.isNotEmpty) {
+        TimeOfDay endTime = TimeOfDay.fromDateTime(
+            DateFormat('hh:mm a').parse(_timeEndController.text));
+        DateTime endDateTime = DateTime(
+          selectedDate.year,
+          selectedDate.month,
+          selectedDate.day,
+          endTime.hour,
+          endTime.minute,
+        );
+        toTimestamp = endDateTime.millisecondsSinceEpoch;
+      } else {
+        toTimestamp = selectedDate.millisecondsSinceEpoch;
+      }
+    }
+
+    CreateEventCalendarModel eventModel = CreateEventCalendarModel(
+      from: fromTimestamp,
+      to: toTimestamp,
+      type: widget.isOrganization ? 'organization' : 'personal',
+      content: _contentController.text,
+      notes: _noteController.text.isNotEmpty ? _noteController.text : null,
+      color: _selectedColor,
+      organizationId: "605b064ad9b8222a8db47eb8",
+      resources: allResources,
+      attachments: _selectedFile != null ? [_selectedFile!] : [],
+      hosts: widget.selectedHosts
+          .map((host) => AttendeeModel(
+                userId: host['userId'] ?? '', // Đảm bảo userId không trống
+                fullName: host['fullName'] ?? '',
+                jobTitle: host['jobTitle'] ?? '',
+                organizationId:
+                    host['organizationId'] ?? '605b064ad9b8222a8db47eb8',
+                organizationName:
+                    host['organizationName'] ?? 'VĂN PHÒNG TRUNG ƯƠNG ĐẢNG',
+              ))
+          .toList(),
+      attendeesRequired: widget.selectedRequiredAttendees
+          .map((attendee) => AttendeeModel(
+                userId: attendee['userId'] ?? '', // Đảm bảo userId không trống
+                fullName: attendee['fullName'] ?? '',
+                jobTitle: attendee['jobTitle'] ?? '',
+                organizationId:
+                    attendee['organizationId'] ?? '605b064ad9b8222a8db47eb8',
+                organizationName:
+                    attendee['organizationName'] ?? 'VĂN PHÒNG TRUNG ƯƠNG ĐẢNG',
+              ))
+          .toList(),
+      attendeesNoRequired: widget.selectedAttendees
+          .map((attendee) => AttendeeModel(
+                userId: attendee['userId'] ?? '', // Đảm bảo userId không trống
+                fullName: attendee['fullName'] ?? '',
+                jobTitle: attendee['jobTitle'] ?? '',
+                organizationId:
+                    attendee['organizationId'] ?? '605b064ad9b8222a8db47eb8',
+                organizationName:
+                    attendee['organizationName'] ?? 'VĂN PHÒNG TRUNG ƯƠNG ĐẢNG',
+              ))
+          .toList(),
+    );
+
+    // In ra để debug
+    print('Event Model Data:');
+    // print(eventModel.toJson());
+
+    try {
+      // Gọi API tương ứng dựa vào loại lịch
+      final result = widget.isOrganization
+          ? await _apiProvider.createEventCalendar(
+              User.token.toString(), eventModel)
+          : await _apiProvider.createEventCalendarForPersonal(
+              User.token.toString(), eventModel);
+
+      if (result != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+              content: Text(widget.isOrganization
+                  ? 'Tạo lịch đơn vị thành công'
+                  : 'Tạo lịch cá nhân thành công')),
+        );
+        Navigator.pop(context);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Có lỗi xảy ra khi tạo lịch')),
+        );
+      }
+    } catch (e) {
+      print('Error creating event: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Có lỗi xảy ra: $e')),
+      );
+    }
   }
 
   Future<void> colorsAPI() async {
@@ -393,9 +438,7 @@ class _TabContentAddTaskState extends State<TabContentAddTask>
                           borderRadius: BorderRadius.circular(10.0),
                         ),
                       ),
-                      onPressed: () {
-                        // Handle submit
-                      },
+                      onPressed: _handleSave,
                       child: Padding(
                         padding: const EdgeInsets.all(10.0),
                         child: Text(
