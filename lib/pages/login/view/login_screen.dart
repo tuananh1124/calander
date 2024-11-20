@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_calendar/models/login_model.dart';
 import 'package:flutter_calendar/network/api_service.dart';
+import 'package:flutter_calendar/pages/compoments/my_button.dart';
+import 'package:flutter_calendar/pages/compoments/my_textfield.dart';
 import 'package:flutter_calendar/pages/home_page/home_page.dart';
 import 'package:flutter_calendar/pages/login/bloc/bloc/auth_bloc.dart';
-import 'package:flutter_calendar/pages/login/compoments/my_button.dart';
-import 'package:flutter_calendar/pages/login/compoments/my_textfield.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 

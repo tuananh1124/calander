@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_calendar/models/create_event_resource_model.dart';
 import 'package:flutter_calendar/models/login_model.dart';
 import 'package:flutter_calendar/network/api_service.dart';
-import 'package:flutter_calendar/pages/login/compoments/my_button.dart';
-import 'package:flutter_calendar/pages/login/compoments/my_textfield.dart';
+import 'package:flutter_calendar/pages/compoments/my_button.dart';
+import 'package:flutter_calendar/pages/compoments/my_textfield.dart';
+
 
 class AddResourcePage extends StatefulWidget {
   final String calendarType; // Add calendar type parameter

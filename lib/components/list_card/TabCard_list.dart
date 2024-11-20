@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_calendar/models/color_model.dart';
+import 'package:flutter_calendar/pages/addtask_manager/addtask_tab/content_addtask_tab.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_calendar/components/list_card/TabCard_item.dart';
 import 'package:flutter_calendar/models/list_event_calendar_model.dart';
@@ -11,20 +12,23 @@ class TabcardList extends StatefulWidget {
   final Function(int) onEventCountChanged;
   final DateTime selectedDate;
   final String calendarType; // Thêm tham số này
-
+  final Function? onRefresh; // Thêm callback để refresh
+  final VoidCallback? onRefreshComplete; // Thêm callback này
   TabcardList({
     Key? key,
     required this.isMorning,
     required this.onEventCountChanged,
     required this.selectedDate,
     required this.calendarType, // Thêm vào constructor
+    this.onRefresh, // Thêm parameter này
+    this.onRefreshComplete,
   }) : super(key: key);
 
   @override
-  _TabcardListState createState() => _TabcardListState();
+  TabcardListState createState() => TabcardListState();
 }
 
-class _TabcardListState extends State<TabcardList>
+class TabcardListState extends State<TabcardList>
     with AutomaticKeepAliveClientMixin {
   bool _isLoading = true;
   final ApiProvider _apiProvider = ApiProvider();
@@ -34,8 +38,16 @@ class _TabcardListState extends State<TabcardList>
   @override
   void initState() {
     super.initState();
-    fetchListEveneCalendar();
-    fetchColors();
+    _loadData();
+  }
+
+  Future<void> refresh() async {
+    await fetchListEveneCalendar();
+  }
+
+  Future<void> _loadData() async {
+    await fetchListEveneCalendar();
+    await fetchColors();
   }
 
   Future<void> fetchColors() async {
@@ -54,19 +66,33 @@ class _TabcardListState extends State<TabcardList>
     super.didUpdateWidget(oldWidget);
     if (oldWidget.selectedDate != widget.selectedDate ||
         oldWidget.calendarType != widget.calendarType) {
-      // Thêm điều kiện này
       fetchListEveneCalendar();
+    }
+  }
+
+  void _updateEventCount() {
+    if (mounted) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        widget.onEventCountChanged(_events.length);
+      });
     }
   }
 
   @override
   void setState(VoidCallback fn) {
-    super.setState(fn);
-    widget.onEventCountChanged(_events.length);
+    if (mounted) {
+      super.setState(fn);
+    }
   }
 
   Future<void> fetchListEveneCalendar() async {
+    if (!mounted) return;
+
     try {
+      setState(() {
+        _isLoading = true;
+      });
+
       List<ListEventcalendarModel>? modelList;
       if (widget.calendarType == 'organization') {
         modelList =
@@ -76,15 +102,23 @@ class _TabcardListState extends State<TabcardList>
             .getListOfPersonalEveneCalendar(User.token.toString());
       }
 
-      setState(() {
-        _events = _filterAndSortEvents(modelList ?? []);
-        _isLoading = false;
-      });
+      if (mounted) {
+        final filteredEvents = _filterAndSortEvents(modelList ?? []);
+        setState(() {
+          _events = filteredEvents;
+          _isLoading = false;
+        });
+
+        widget.onEventCountChanged?.call(filteredEvents.length);
+        widget.onRefreshComplete?.call();
+      }
     } catch (e) {
       print('Error fetching event list: $e');
-      setState(() {
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
   }
 
@@ -147,7 +181,7 @@ class _TabcardListState extends State<TabcardList>
               attendeesRequired: _formatAttendees(event.attendeesRequired),
               attendeesNoRequired: _formatAttendees(event.attendeesNoRequired),
               resources: event.resources?.join(', ') ?? '',
-              attachments: event.attachments?.join(', ') ?? '',
+              attachments: _formatFile(event.attachments),
               creator: event.creator?.fullName ?? '',
               color: event.color,
             ),
@@ -186,6 +220,10 @@ class _TabcardListState extends State<TabcardList>
 
   String _formatAttendees(List<dynamic>? attendees) {
     return attendees?.map((a) => a['fullName'] ?? '').join(', ') ?? '';
+  }
+
+  String _formatFile(List<dynamic>? attendees) {
+    return attendees?.map((a) => a['fileName'] ?? '').join(', ') ?? '';
   }
 
   @override

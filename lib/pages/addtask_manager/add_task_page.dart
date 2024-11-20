@@ -4,10 +4,11 @@ import 'package:flutter_calendar/pages/addtask_manager/addtask_tab/content_persi
 
 class AddTaskPage extends StatefulWidget {
   final String calendarType;
-
+  final Function(bool)? onEventCreated;
   const AddTaskPage({
     Key? key,
     required this.calendarType,
+    this.onEventCreated,
   }) : super(key: key);
   @override
   _AddTaskPageState createState() => _AddTaskPageState();
@@ -77,8 +78,12 @@ class _AddTaskPageState extends State<AddTaskPage> {
                         selectedRequiredAttendees: _selectedRequiredAttendees,
                         selectedLocation: _selectedLocation,
                         selectedResources: _selectedResources,
-                        isOrganization: widget.calendarType ==
-                            'organization', // Thêm dòng này
+                        isOrganization: widget.calendarType == 'organization',
+                        onEventCreated: () {
+                          if (widget.onEventCreated != null) {
+                            widget.onEventCreated!(true);
+                          }
+                        },
                       ),
                     ),
                     SingleChildScrollView(

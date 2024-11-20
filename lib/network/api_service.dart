@@ -386,11 +386,6 @@ class ApiProvider {
   Future<CreateEventCalendarModel?> createEventCalendarForPersonal(
       String token, CreateEventCalendarModel event) async {
     try {
-      // print('Request URL: $serverURL/website/event-calendar');
-      // print('Request Headers: ${{
-      //   'Content-Type': 'application/json',
-      //   'Authorization': 'Bearer $token'
-      // }}');
       print('Request Body: ${jsonEncode(event.toJson())}');
 
       final response = await http.post(
@@ -402,12 +397,8 @@ class ApiProvider {
         body: jsonEncode(event.toJson()),
       );
 
-      // print('Response Status Code: ${response.statusCode}');
-      // print('Response Body: ${response.body}');
-
       if (response.statusCode == 200) {
         final responseData = jsonDecode(response.body);
-        // print('Decoded Response: $responseData');
 
         if (responseData['result'] != null) {
           return CreateEventCalendarModel.fromJson(responseData['result']);

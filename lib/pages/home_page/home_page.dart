@@ -37,6 +37,9 @@ class _HomePageState extends State<HomePage>
   String _currentCalendarType = 'organization';
   String _selectedAcceptFilter = 'Tham gia'; // Giá trị mặc định mới
 
+  late final GlobalKey<TabcardListState> _morningTabKey = GlobalKey();
+  late final GlobalKey<TabcardListState> _afternoonTabKey = GlobalKey();
+
   @override
   void initState() {
     super.initState();
@@ -51,6 +54,15 @@ class _HomePageState extends State<HomePage>
     }
   }
 
+  void _refreshTabs() {
+    if (_morningTabKey.currentState != null) {
+      _morningTabKey.currentState!.fetchListEveneCalendar();
+    }
+    if (_afternoonTabKey.currentState != null) {
+      _afternoonTabKey.currentState!.fetchListEveneCalendar();
+    }
+  }
+
   @override
   void dispose() {
     _tabController.dispose();
@@ -60,39 +72,34 @@ class _HomePageState extends State<HomePage>
   }
 
   void _handleCalendarTypeChange(String type) {
-    setState(() {
-      _currentCalendarType = type;
-      // Reset các state liên quan
-      morningCount = 0;
-      afternoonCount = 0;
+    if (!mounted) return;
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        setState(() {
+          _currentCalendarType = type;
+          morningCount = 0;
+          afternoonCount = 0;
+        });
+        _refreshTabs();
+      }
     });
-
-    // Cập nhật dữ liệu
-    _fetchEventCounts();
-
-    // Cập nhật dữ liệu cho các bloc
-    if (_selectedFilter == 'Theo tuần') {
-      _dateBloc.add(LoadData(_currentDate));
-    } else {
-      _monthBloc.add(LoadDataToMonth(_currentDate));
-    }
   }
 
   Future<void> _fetchEventCounts() async {
-    final ApiProvider apiProvider = ApiProvider();
+    if (!mounted) return;
+
     try {
       List<ListEventcalendarModel>? events;
-
-      // Lấy events dựa trên loại lịch
       if (_currentCalendarType == 'organization') {
-        events = await apiProvider.getListEveneCalendar(User.token.toString());
+        events = await _apiProvider.getListEveneCalendar(User.token.toString());
       } else {
-        events = await apiProvider
+        events = await _apiProvider
             .getListOfPersonalEveneCalendar(User.token.toString());
       }
 
-      if (events != null) {
-        int morning = events.where((event) {
+      if (events != null && mounted) {
+        final morning = events.where((event) {
           if (event.from != null) {
             DateTime eventTime =
                 DateTime.fromMillisecondsSinceEpoch(event.from!);
@@ -104,7 +111,7 @@ class _HomePageState extends State<HomePage>
           return false;
         }).length;
 
-        int afternoon = events.where((event) {
+        final afternoon = events.where((event) {
           if (event.from != null) {
             DateTime eventTime =
                 DateTime.fromMillisecondsSinceEpoch(event.from!);
@@ -116,9 +123,13 @@ class _HomePageState extends State<HomePage>
           return false;
         }).length;
 
-        setState(() {
-          morningCount = morning;
-          afternoonCount = afternoon;
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) {
+            setState(() {
+              morningCount = morning;
+              afternoonCount = afternoon;
+            });
+          }
         });
       }
     } catch (e) {
@@ -830,29 +841,58 @@ class _HomePageState extends State<HomePage>
       controller: _tabController,
       children: [
         TabcardList(
+          key: _morningTabKey,
           isMorning: true,
-          onEventCountChanged: (count) => setState(() => morningCount = count),
+          onEventCountChanged: (count) {
+            if (mounted) {
+              setState(() => morningCount = count);
+            }
+          },
           selectedDate: _currentDate,
-          calendarType: _currentCalendarType, // Thêm dòng này
+          calendarType: _currentCalendarType,
+          onRefreshComplete: () {
+            if (mounted) {
+              _fetchEventCounts();
+            }
+          },
         ),
         TabcardList(
+          key: _afternoonTabKey,
           isMorning: false,
-          onEventCountChanged: (count) =>
-              setState(() => afternoonCount = count),
+          onEventCountChanged: (count) {
+            if (mounted) {
+              setState(() => afternoonCount = count);
+            }
+          },
           selectedDate: _currentDate,
-          calendarType: _currentCalendarType, // Thêm dòng này
+          calendarType: _currentCalendarType,
+          onRefreshComplete: () {
+            if (mounted) {
+              _fetchEventCounts();
+            }
+          },
         ),
       ],
     );
   }
 
-  void _navigateToAddTaskPage(BuildContext context) {
-    Navigator.push(
+  void _navigateToAddTaskPage(BuildContext context) async {
+    await Navigator.push(
       context,
       MaterialPageRoute(
-          builder: (context) => AddTaskPage(
-                calendarType: _currentCalendarType,
-              )),
+        builder: (context) => AddTaskPage(
+          calendarType: _currentCalendarType,
+          onEventCreated: (bool success) {
+            if (success && mounted) {
+              // Refresh ngay lập tức
+              setState(() {
+                _refreshTabs();
+                _fetchEventCounts();
+              });
+            }
+          },
+        ),
+      ),
     );
   }
 

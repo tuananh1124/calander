@@ -53,6 +53,35 @@ class _TabcardItemState extends State<TabcardItem> {
         : Colors.grey;
   }
 
+  String _formatResources(String resources) {
+    try {
+      // Tách chuỗi resources thành danh sách
+      List<String> resourcesList = resources.split(',');
+
+      // Tạo danh sách tên resources
+      List<String> formattedResources = [];
+
+      for (String resource in resourcesList) {
+        // Tìm trường name hoặc location trong chuỗi JSON
+        if (resource.contains('name:')) {
+          String name = resource.split('name:')[1].split(',')[0].trim();
+          formattedResources.add(name);
+        } else if (resource.contains('location:')) {
+          String location = resource.split('location:')[1].split(',')[0].trim();
+          formattedResources.add(location);
+        } else if (resource.contains('resource:')) {
+          String resourceName =
+              resource.split('resource:')[1].split(',')[0].trim();
+          formattedResources.add(resourceName);
+        }
+      }
+
+      return formattedResources.join(', ');
+    } catch (e) {
+      return resources; // Trả về chuỗi gốc nếu có lỗi
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -208,6 +237,8 @@ class _TabcardItemState extends State<TabcardItem> {
   }
 
   int _calculateTotalAttendees() {
+    int hosts =
+        widget.hosts.split(',').where((e) => e.trim().isNotEmpty).length;
     int requiredAttendees = widget.attendeesRequired
         .split(',')
         .where((e) => e.trim().isNotEmpty)
@@ -216,7 +247,7 @@ class _TabcardItemState extends State<TabcardItem> {
         .split(',')
         .where((e) => e.trim().isNotEmpty)
         .length;
-    return requiredAttendees + nonRequiredAttendees;
+    return requiredAttendees + nonRequiredAttendees + hosts;
   }
 
   Widget _buildAttachment(BuildContext context) {
@@ -287,7 +318,8 @@ class _TabcardItemState extends State<TabcardItem> {
                     'Người tham dự bắt buộc:', widget.attendeesRequired),
                 _buildDetailRow('Người tham dự không bắt buộc:',
                     widget.attendeesNoRequired),
-                _buildDetailRow('Tài nguyên:', widget.resources),
+                _buildDetailRow('Tài nguyên:',
+                    _formatResources(widget.resources)), // Sử dụng method mới
                 _buildDetailRow('Tệp đính kèm:', widget.attachments),
                 _buildDetailRow('Người tạo:', widget.creator),
               ],

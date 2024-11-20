@@ -15,7 +15,7 @@ class TabContentAddTask extends StatefulWidget {
   final Map<String, String> selectedLocation;
   final List<Map<String, String>> selectedResources;
   final bool isOrganization;
-
+  final VoidCallback? onEventCreated; // Thêm callbac
   const TabContentAddTask({
     Key? key,
     required this.selectedHosts,
@@ -24,6 +24,7 @@ class TabContentAddTask extends StatefulWidget {
     required this.selectedLocation,
     required this.selectedResources,
     required this.isOrganization,
+    this.onEventCreated, // Thêm parameter này
   }) : super(key: key);
 
   @override
@@ -43,8 +44,6 @@ class _TabContentAddTaskState extends State<TabContentAddTask>
   final ApiProvider _apiProvider = ApiProvider();
   ColorModel? colorModelList;
 
-  // Nullable to avoid errors when data is not loaded
-
   @override
   void initState() {
     super.initState();
@@ -52,29 +51,15 @@ class _TabContentAddTaskState extends State<TabContentAddTask>
   }
 
   void _handleSave() async {
-    List<String> resourceIds = widget.selectedResources
-        .map((r) => r['id']?.toString() ?? '')
-        .where((id) => id.isNotEmpty)
-        .toList();
     List<String> allResources = [];
-
-    // Thêm địa điểm (group 0) nếu có
     if (widget.selectedLocation.isNotEmpty &&
         widget.selectedLocation['id'] != null) {
       allResources.add(widget.selectedLocation['id']!);
     }
 
-    // Thêm tài nguyên (group 1)
     allResources.addAll(widget.selectedResources
-        .where((r) => r['id'] != null)
-        .map((r) => r['id']!)
-        .toList());
-    if (_contentController.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Vui lòng nhập nội dung')),
-      );
-      return;
-    }
+        .where((resource) => resource['id'] != null)
+        .map((resource) => resource['id']!));
 
     int? fromTimestamp;
     int? toTimestamp;
@@ -109,8 +94,6 @@ class _TabContentAddTaskState extends State<TabContentAddTask>
           endTime.minute,
         );
         toTimestamp = endDateTime.millisecondsSinceEpoch;
-      } else {
-        toTimestamp = selectedDate.millisecondsSinceEpoch;
       }
     }
 
@@ -164,7 +147,6 @@ class _TabContentAddTaskState extends State<TabContentAddTask>
     // print(eventModel.toJson());
 
     try {
-      // Gọi API tương ứng dựa vào loại lịch
       final result = widget.isOrganization
           ? await _apiProvider.createEventCalendar(
               User.token.toString(), eventModel)
@@ -172,17 +154,16 @@ class _TabContentAddTaskState extends State<TabContentAddTask>
               User.token.toString(), eventModel);
 
       if (result != null) {
+        // Gọi callback trước khi đóng dialog
+        if (widget.onEventCreated != null) {
+          widget.onEventCreated!();
+        }
+
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-              content: Text(widget.isOrganization
-                  ? 'Tạo lịch đơn vị thành công'
-                  : 'Tạo lịch cá nhân thành công')),
+          SnackBar(content: Text('Tạo lịch thành công')),
         );
-        Navigator.pop(context);
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Có lỗi xảy ra khi tạo lịch')),
-        );
+
+        Navigator.pop(context, true); // Trả về true để báo tạo thành công
       }
     } catch (e) {
       print('Error creating event: $e');
@@ -202,17 +183,12 @@ class _TabContentAddTaskState extends State<TabContentAddTask>
 
   Future<void> _pickFile() async {
     FilePickerResult? result = await FilePicker.platform.pickFiles();
-
     if (result != null) {
       PlatformFile file = result.files.first;
-
       setState(() {
-        _selectedFile = file.name; // Store the selected file name
+        _selectedFile = file.name; // Lưu tên file
       });
-
       print('File selected: ${file.name}');
-    } else {
-      // User canceled the picker
     }
   }
 
